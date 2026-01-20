@@ -351,15 +351,16 @@ namespace Poke.UI
                             if(li.SizeMode.x == SizingMode.Grow) {
                                 _rectTracker.Add(this, li.Rect, DrivenTransformProperties.SizeDeltaX);
                                 li.Rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
+                                
+                                _contentSize.x += size.x;
                             }
 
                             if(li.SizeMode.y == SizingMode.Grow) {
                                 _rectTracker.Add(this, li.Rect, DrivenTransformProperties.SizeDeltaY);
                                 li.Rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
+                                
+                                _contentSize.y = Mathf.Max(size.y, _contentSize.y);
                             }
-
-                            _contentSize.x += size.x;
-                            _contentSize.y = Mathf.Max(size.y, _contentSize.y);
                         }
 
                         break;
@@ -373,15 +374,16 @@ namespace Poke.UI
                             if(li.SizeMode.y == SizingMode.Grow) {
                                 _rectTracker.Add(this, li.Rect, DrivenTransformProperties.SizeDeltaY);
                                 li.Rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
+                                
+                                _contentSize.y += size.y;
                             }
 
                             if(li.SizeMode.x == SizingMode.Grow) {
                                 _rectTracker.Add(this, li.Rect, DrivenTransformProperties.SizeDeltaX);
                                 li.Rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
+                                
+                                _contentSize.x = Mathf.Max(size.x, _contentSize.x);
                             }
-
-                            _contentSize.y += size.y;
-                            _contentSize.x = Mathf.Max(size.x, _contentSize.x);
                         }
 
                         break;
