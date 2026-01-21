@@ -1,4 +1,22 @@
-﻿## [1.5.0] - ???
+﻿## [1.5.0] - 2026-01-21
+
+### Added
+- Added logging options for `LayoutRoot` and `Layout`
+
+### Changed
+- Moved GameObject create methods into "GameObject/UI (Canvas)/Layout/" in Unity 6.3 and above
+  - (previous versions use "GameObject/UI/Layout/")
+
+### Fixed
+- Fixed `LayoutText` calculating incorrect sizes on enable
+- Fixed TextMeshPro not always updating mesh positions when text content changes
+- Fixed 'SpaceBetween' `SizingMode` not working with grow children
+- 'ignoreLayout' field is now correctly populated in `ChildInfo` on child cache refresh (shoutout @immafirin07)
+- Small performance improvements & reduced allocations in `Layout` (shoutout @artyom-zuev)
+- Fixed no `LayoutRoot` being present when editing prefabs in-context (shoutout @artyom-zuev)
+- Improved `Layout` detection of changes in children
+  - Can now detect child index changing
+- Fixed occasional NullReferenceExceptions from custom editors (shoutout @artyom-zuev)
 
 ## [1.4.2] - 2025-12-20
 
