@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2025 Alex Howe
+    Copyright (c) 2026 Alex Howe
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -15,10 +15,7 @@ using TMPro;
 using UnityEngine;
 
 namespace Poke.UI {
-    [
-        ExecuteAlways,
-        RequireComponent(typeof(TMP_Text))
-    ]
+    [RequireComponent(typeof(TMP_Text))]
     public class LayoutText : LayoutItem
     {
         [Header("Text")]
@@ -26,7 +23,7 @@ namespace Poke.UI {
         
         private TMP_Text _text;
         private DrivenRectTransformTracker _rectTracker;
-        private bool _updateMesh;
+        private int _strLength;
         
         protected override void Awake() {
             base.Awake();
@@ -36,8 +33,12 @@ namespace Poke.UI {
         }
 
         protected override void OnEnable() {
-            base.OnEnable();
             _text.OnPreRenderText += Resize;
+            _text.ForceMeshUpdate(forceTextReparsing: true);
+
+            _strLength = _text.textInfo.characterCount;
+            
+            base.OnEnable();
         }
 
         protected override void OnDisable() {
@@ -45,22 +46,18 @@ namespace Poke.UI {
             _text.OnPreRenderText -= Resize;
         }
 
-        public void Start() {
-            Resize(_text.textInfo);
-        }
-
-        private void LateUpdate() {
-            if(_updateMesh) {
-                _text.ForceMeshUpdate();
-                _updateMesh = false;
-            }
+        public override void Update() {
+            if(_text.textInfo.characterCount != _strLength)
+                _text.ForceMeshUpdate(forceTextReparsing: true);
+            
+            base.Update();
         }
 
         private void Resize(TMP_TextInfo textInfo) {
             _text.textWrappingMode = m_sizing.x == SizingMode.Grow ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
 
-            bool fitX = m_sizing.x == SizingMode.FitContent && m_sizing.x != SizingMode.Grow;
-            bool fitY = m_sizing.y == SizingMode.FitContent && m_sizing.y != SizingMode.Grow;
+            bool fitX = m_sizing.x == SizingMode.FitContent;
+            bool fitY = m_sizing.y == SizingMode.FitContent;
             
             _rectTracker.Clear();
             if(fitX)
@@ -79,21 +76,22 @@ namespace Poke.UI {
             
             // X Pass
             if(fitX) {
-                _rect.sizeDelta = _rect.sizeDelta.With(size.x);
+                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
             }
             
             // Y Pass
             if(fitY) {
                 float height = 0;
+                //Debug.Log($"[LT:{gameObject.name}] line count: {textInfo.lineCount}");
                 for(int i = 0; i < textInfo.lineCount; i++) {
-                    float lineHeight = textInfo.lineInfo[i].lineHeight;
-                    height += lineHeight;
+                    height += textInfo.lineInfo[i].lineHeight;
                 }
                 size.y = height;
-                _rect.sizeDelta = _rect.sizeDelta.With(y: size.y);
+                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
             }
+            
+            //Debug.Log($"[LT:{gameObject.name}] {_rect.rect.size:f3}");
 
-            _updateMesh = true;
         }
     }
 }

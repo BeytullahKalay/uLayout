@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (c) 2025 Alex Howe
+    Copyright (c) 2026 Alex Howe
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,10 @@ namespace Poke.UI
     ]
     public class LayoutItem : MonoBehaviour
     {
-        [SerializeField] protected bool m_ignoreLayout = false;
+        [SerializeField] protected bool m_log;
         
-        [Header("Sizing")]
+        [Header("Layout Item")]
+        [SerializeField] protected bool m_ignoreLayout = false;
         [SerializeField] protected SizeModes m_sizing;
 
         public bool IgnoreLayout {
@@ -53,6 +54,10 @@ namespace Poke.UI
         }
 
         protected virtual void Awake() {
+#if UNITY_EDITOR
+            ValidatePrefabStage();
+#endif
+            
             _rect = GetComponent<RectTransform>();
             
             // parent will always exist EXCEPT for in prefab editing
@@ -85,13 +90,47 @@ namespace Poke.UI
                 // only update size if parent size has changed
                 if(m_sizing.x == SizingMode.Grow && !Mathf.Approximately(_parentRect.rect.size.x, _parentSize.x)) {
                     _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _parentRect.rect.size.x);
-                    _parentSize = _parentSize.With(x: _parentRect.rect.size.x);
+                    _parentSize = _parentSize.SetX(_parentRect.rect.size.x);
                 }
                 if(m_sizing.y == SizingMode.Grow && !Mathf.Approximately(_parentRect.rect.size.y, _parentSize.y)) {
                     _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _parentRect.rect.size.y);
-                    _parentSize = _parentSize.With(y: _parentRect.rect.size.y);
+                    _parentSize = _parentSize.SetY(_parentRect.rect.size.y);
                 }
                 
+            }
+        }
+
+        private void OnValidate() {
+            Awake();
+        }
+
+#if UNITY_EDITOR
+        private void ValidatePrefabStage() {
+            var prefabStage = UnityEditor.SceneManagement.PrefabStageUtility.GetPrefabStage(gameObject);
+            if(prefabStage == null)
+                return;
+        
+            LayoutRoot lr = gameObject.GetComponentInParent<LayoutRoot>(true);
+            if(lr != null)
+                return;
+        
+            // This way of getting to root is necessary since prefabContentsRoot and GetRootGameObjects aren't available at this point
+            Transform topmostTransform = gameObject.transform;
+            while (topmostTransform.parent != null)
+                topmostTransform = topmostTransform.parent;
+        
+            GameObject layoutRootObject = new GameObject("LayoutRoot (Editor)");
+            layoutRootObject.hideFlags = HideFlags.DontSaveInEditor;
+            layoutRootObject.AddComponent<LayoutRoot>();
+        
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(layoutRootObject, prefabStage.scene);
+            topmostTransform.SetParent(layoutRootObject.transform, false);
+        }
+#endif
+
+        public void SetParentDirty() {
+            if(_parent) {
+                _parent.SetDirty();
             }
         }
     }

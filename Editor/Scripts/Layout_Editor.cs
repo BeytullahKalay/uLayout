@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (c) 2025 Alex Howe
+    Copyright (c) 2026 Alex Howe
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -29,8 +29,8 @@ namespace Poke.UI
         private SerializedProperty _alignContent;
         private SerializedProperty _innerSpacing;
         
-        protected override void Awake() {
-            base.Awake();
+        protected override void OnEnable() {
+            base.OnEnable();
             _layout = target as Layout;
 
             _padding = serializedObject.FindProperty("m_padding");
@@ -43,6 +43,9 @@ namespace Poke.UI
         public override void OnInspectorGUI() {
             base.OnInspectorGUI();
 
+            if(!_layout)
+                return;
+            
             EditorGUILayout.PropertyField(_padding);
             EditorGUILayout.PropertyField(_direction);
             EditorGUILayout.PropertyField(_justifyContent);
