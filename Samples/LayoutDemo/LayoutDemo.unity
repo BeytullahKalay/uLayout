@@ -2725,7 +2725,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 136.9, y: 100}
+  m_SizeDelta: {x: 138.17, y: 100}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &860467372
 MonoBehaviour:
@@ -2779,7 +2779,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: uLayout::Poke.UI.LayoutItem
   m_ignoreLayout: 0
   m_sizing:
-    x: 0
+    x: 1
     y: 0
 --- !u!1 &914481866
 GameObject:
@@ -4289,7 +4289,7 @@ GameObject:
   - component: {fileID: 1228376617}
   - component: {fileID: 1228376616}
   m_Layer: 5
-  m_Name: Layout (2)
+  m_Name: SUB_LAYOUT
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

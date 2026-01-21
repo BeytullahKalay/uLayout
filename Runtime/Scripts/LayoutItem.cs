@@ -22,9 +22,10 @@ namespace Poke.UI
     ]
     public class LayoutItem : MonoBehaviour
     {
-        [SerializeField] protected bool m_ignoreLayout = false;
+        [SerializeField] protected bool m_log;
         
-        [Header("Sizing")]
+        [Header("Layout Item")]
+        [SerializeField] protected bool m_ignoreLayout = false;
         [SerializeField] protected SizeModes m_sizing;
 
         public bool IgnoreLayout {

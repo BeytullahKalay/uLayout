@@ -53,7 +53,7 @@ namespace Poke.UI
             _reverse.Clear();
                 
             // fit sizing pass (0)
-            if(m_log) Debug.Log($"[Root]: Fit Size Pass ({Time.unscaledTime:f5})");
+            if(m_log) Debug.Log($"[Root]: Fit Size Pass");
             foreach(Layout l in _layouts) {
                 if(l.NeedsRefresh) {
                     l.ComputeFitSize();
@@ -62,7 +62,7 @@ namespace Poke.UI
             }
 
             // grow sizing pass (1)
-            if(m_log) Debug.Log($"[Root]: Grow Size Pass ({Time.unscaledTime:f5})");
+            if(m_log) Debug.Log($"[Root]: Grow Size Pass");
             foreach(Layout l in _layouts) {
                 if(l.NeedsRefresh) {
                     l.GrowChildren();
@@ -70,18 +70,19 @@ namespace Poke.UI
             }
                 
             // layout pass (2)
-            if(m_log) Debug.Log($"[Root]: Layout Pass ({Time.unscaledTime:f5})");
+            if(m_log) Debug.Log($"[Root]: Layout Pass");
             foreach(Layout l in _reverse) {
                 l.ComputeLayout();
             }
             
-            //Debug.Log($"[Root]: Refreshed {_reverse.Count} layouts");
+            if(m_log) Debug.Log($"[Root]: Refreshed {_reverse.Count} layouts");
             
             _dirty = false;
         }
 
         public void RegisterLayout(Layout layout) {
-            //Debug.Log($"Registered \"{layout.name}\" at depth [{layout.Depth}]");
+            if(m_log) Debug.Log($"Registered \"{layout.name}\" at depth [{layout.Depth}]");
+            
             layout.OnLayoutChanged += SetDirty;
             _layouts.Add(layout);
         }
@@ -89,7 +90,8 @@ namespace Poke.UI
         public void UnregisterLayout(Layout layout) {
             if(_layouts.Remove(layout)) {
                 layout.OnLayoutChanged -= SetDirty;
-                //Debug.Log($"Removed \"{layout.name}\"");
+                
+                if(m_log) Debug.Log($"Removed \"{layout.name}\"");
             }
             else {
                 Debug.LogError($"Failed to remove \"{layout.name}\" (not found)");

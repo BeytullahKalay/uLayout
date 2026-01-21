@@ -229,28 +229,15 @@ namespace Poke.UI
             if(_children.Count > 0) {
                 // get number of disabled/ignore children
                 foreach(ChildInfo c in _children) {
-                    if(!c.enabled || c.ignoreLayout) {
+                    if(CheckIgnoreElem(c)) {
                         _ignoreCount++;
                     }
                 }
 
                 float primarySize = m_justifyContent == Justification.SpaceBetween ? 0 : m_innerSpacing * (_children.Count-_ignoreCount-1);
                 float crossSize = 0;
-                
-                switch(m_direction) {
-                    case LayoutDirection.Row:
-                    case LayoutDirection.RowReverse:
-                        primarySize += m_padding.left + m_padding.right;
-                        crossSize += m_padding.top + m_padding.bottom;
-                        break;
-                    case LayoutDirection.Column:
-                    case LayoutDirection.ColumnReverse:
-                        primarySize += m_padding.top + m_padding.bottom;
-                        crossSize += m_padding.left + m_padding.right;
-                        break;
-                }
-
                 LayoutItem li = null;
+                
                 // calculate content size
                 float maxCrossSize = 0;
                 foreach(ChildInfo elem in _children) {
@@ -303,11 +290,17 @@ namespace Poke.UI
                     switch(m_direction) {
                         case LayoutDirection.Row:
                         case LayoutDirection.RowReverse:
-                            _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, primarySize);
+                            _rect.SetSizeWithCurrentAnchors(
+                                RectTransform.Axis.Horizontal,
+                                primarySize + m_padding.left + m_padding.right
+                            );
                             break;
                         case LayoutDirection.Column:
                         case LayoutDirection.ColumnReverse:
-                            _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, crossSize);
+                            _rect.SetSizeWithCurrentAnchors(
+                                RectTransform.Axis.Horizontal,
+                                crossSize + m_padding.left + m_padding.right
+                            );
                             break;
                     }
                 }
@@ -317,26 +310,33 @@ namespace Poke.UI
                     switch(m_direction) {
                         case LayoutDirection.Row:
                         case LayoutDirection.RowReverse:
-                            _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, crossSize);
+                            _rect.SetSizeWithCurrentAnchors(
+                                RectTransform.Axis.Vertical,
+                                crossSize + m_padding.top + m_padding.bottom
+                            );
                             break;
                         case LayoutDirection.Column:
                         case LayoutDirection.ColumnReverse:
-                            _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, primarySize);
+                            _rect.SetSizeWithCurrentAnchors(
+                                RectTransform.Axis.Vertical,
+                                primarySize + m_padding.top + m_padding.bottom
+                            );
                             break;
                     }
                 }
                 
-                Debug.Log($"[L:{gameObject.name}] calculated size: {_rect.rect.size:f3}");
+                if(m_log) Debug.Log($"[L:{gameObject.name}] calculated rect size: {_rect.rect.size:f3}");
             }
             else {
                 _contentSize = Vector2.zero;
             }
+            
+            if(m_log) Debug.Log($"[L:{gameObject.name}] content size: {_contentSize:f3}");
         }
 
         public void GrowChildren() {
             if(_growChildren.Count > 0) {
-                Debug.Log($"[L:{gameObject.name}] growing {_growChildren.Count} children");
-                Debug.Log($"[L:{gameObject.name}] content size: {_contentSize:f3}");
+                if(m_log) Debug.Log($"[L:{gameObject.name}] growing {_growChildren.Count} children");
                 
                 Vector2 size;
                 float crossSize;
@@ -435,7 +435,7 @@ namespace Poke.UI
                             }
                             break;
                         case Justification.Center:
-                            primaryOffset -= _contentSize.x / 2;
+                            primaryOffset -= (_contentSize.x + m_padding.left + m_padding.right) / 2;
                             
                             foreach(ChildInfo c in _children) {
                                 // skip disabled/ignore items
@@ -466,7 +466,7 @@ namespace Poke.UI
                             break;
                         case Justification.SpaceBetween:
                             primaryOffset += m_padding.left;
-                            leftover = _rect.rect.size.x - _contentSize.x;
+                            leftover = _rect.rect.size.x - _contentSize.x - m_padding.left - m_padding.right;
                             
                             if(_children.Count > 1)
                                 spacing = leftover / (_children.Count-_ignoreCount-1);
@@ -506,7 +506,7 @@ namespace Poke.UI
                             }
                             break;
                         case Justification.Center:
-                            primaryOffset += _contentSize.x / 2;
+                            primaryOffset += (_contentSize.x + m_padding.left + m_padding.right) / 2;
                             
                             foreach(ChildInfo c in _children) {
                                 // skip disabled/ignore items
@@ -537,7 +537,7 @@ namespace Poke.UI
                         case Justification.SpaceBetween:
                             primaryOffset += m_padding.right;
                             
-                            leftover = _rect.rect.size.x - _contentSize.x;
+                            leftover = _rect.rect.size.x - _contentSize.x - m_padding.left - m_padding.right;
                             
                             if(_children.Count > 1)
                                 spacing = leftover / (_children.Count-1);
@@ -573,7 +573,7 @@ namespace Poke.UI
                             }
                             break;
                         case Justification.Center:
-                            primaryOffset += _contentSize.y / 2;
+                            primaryOffset += (_contentSize.y + m_padding.top + m_padding.bottom) / 2;
                             
                             foreach(ChildInfo c in _children) {
                                 // skip disabled/ignore items
@@ -604,7 +604,7 @@ namespace Poke.UI
                             break;
                         case Justification.SpaceBetween:
                             primaryOffset += m_padding.top;
-                            leftover = _rect.rect.size.y - _contentSize.y;
+                            leftover = _rect.rect.size.y - _contentSize.y - m_padding.top - m_padding.bottom;
                             
                             if(_children.Count > 1)
                                 spacing = leftover / (_children.Count-_ignoreCount-1);
@@ -646,7 +646,7 @@ namespace Poke.UI
                             }
                             break;
                         case Justification.Center:
-                            primaryOffset -= _contentSize.y / 2;
+                            primaryOffset -= (_contentSize.y + m_padding.top + m_padding.bottom) / 2;
                             
                             foreach(ChildInfo c in _children) {
                                 // skip disabled/ignore items
@@ -677,7 +677,7 @@ namespace Poke.UI
                         case Justification.SpaceBetween:
                             primaryOffset += m_padding.bottom;
                             
-                            leftover = _rect.rect.size.y - _contentSize.y;
+                            leftover = _rect.rect.size.y - _contentSize.y - m_padding.top - m_padding.bottom;
                             
                             if(_children.Count > 1)
                                 spacing = leftover / (_children.Count-1);

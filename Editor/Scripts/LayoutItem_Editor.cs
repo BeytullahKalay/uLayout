@@ -23,18 +23,21 @@ namespace Poke.UI
     public class LayoutItem_Editor : Editor
     {
         private LayoutItem _item;
-        
+
+        private SerializedProperty _log;
         private SerializedProperty _ignoreLayout;
         private SerializedProperty _sizing;
 
         protected virtual void Awake() {
             _item = target as LayoutItem;
-            
+
+            _log = serializedObject.FindProperty("m_log");
             _ignoreLayout = serializedObject.FindProperty("m_ignoreLayout");
             _sizing = serializedObject.FindProperty("m_sizing");
         }
 
         public override void OnInspectorGUI() {
+            EditorGUILayout.PropertyField(_log);
             EditorGUILayout.PropertyField(_ignoreLayout);
             
             // disable sizing options if ignoreLayout is true
