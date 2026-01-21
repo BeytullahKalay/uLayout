@@ -40,8 +40,6 @@ namespace Poke.UI
         }
         
         public void LateUpdate() {
-            print($"[Root] tick {_tick}");
-            
             if(_dirty) {
                 UpdateLayout();
             }

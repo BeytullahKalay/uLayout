@@ -126,5 +126,11 @@ namespace Poke.UI
             topmostTransform.SetParent(layoutRootObject.transform, false);
         }
 #endif
+
+        public void SetParentDirty() {
+            if(_parent) {
+                _parent.SetDirty();
+            }
+        }
     }
 }

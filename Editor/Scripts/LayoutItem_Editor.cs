@@ -22,10 +22,14 @@ namespace Poke.UI
     ]
     public class LayoutItem_Editor : Editor
     {
+        private LayoutItem _item;
+        
         private SerializedProperty _ignoreLayout;
         private SerializedProperty _sizing;
 
         protected virtual void Awake() {
+            _item = target as LayoutItem;
+            
             _ignoreLayout = serializedObject.FindProperty("m_ignoreLayout");
             _sizing = serializedObject.FindProperty("m_sizing");
         }
@@ -38,7 +42,10 @@ namespace Poke.UI
             EditorGUILayout.PropertyField(_sizing);
             GUI.enabled = true;
 
-            serializedObject.ApplyModifiedProperties();
+            if(serializedObject.hasModifiedProperties) {
+                serializedObject.ApplyModifiedProperties();
+                _item.SetParentDirty();
+            }
         }
     }
 }

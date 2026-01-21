@@ -336,6 +336,7 @@ namespace Poke.UI
         public void GrowChildren() {
             if(_growChildren.Count > 0) {
                 Debug.Log($"[L:{gameObject.name}] growing {_growChildren.Count} children");
+                Debug.Log($"[L:{gameObject.name}] content size: {_contentSize:f3}");
                 
                 Vector2 size;
                 float crossSize;
