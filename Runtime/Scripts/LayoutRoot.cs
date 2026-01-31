@@ -28,10 +28,11 @@ namespace Poke.UI
         private readonly Stack<Layout> _reverse = new ();
         private bool _dirty;
 
-        private int _tick;
+        private void OnEnable() {
+            _dirty = true;
+        }
 
         private void Start() {
-            _tick = 0;
             UpdateLayout();
         }
 
@@ -43,8 +44,6 @@ namespace Poke.UI
             if(_dirty) {
                 UpdateLayout();
             }
-            
-            _tick++;
         }
 
         public void UpdateLayout() {
@@ -85,12 +84,15 @@ namespace Poke.UI
             
             layout.OnLayoutChanged += SetDirty;
             _layouts.Add(layout);
+            
+            SetDirty();
         }
 
         public void UnregisterLayout(Layout layout) {
             if(_layouts.Remove(layout)) {
                 layout.OnLayoutChanged -= SetDirty;
                 
+                SetDirty();
                 if(m_log) Debug.Log($"Removed \"{layout.name}\"");
             }
             else {
