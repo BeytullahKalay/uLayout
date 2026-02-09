@@ -833,9 +833,6 @@ namespace Poke.UI
                 
                 LayoutItem li = rt.GetComponent<LayoutItem>();
                 _layoutItems[i] = li;
-                if(li) {
-                    li.TrackerProps = DrivenTransformProperties.None;
-                }
                 
                 _children.Add(
                     new ChildInfo {
