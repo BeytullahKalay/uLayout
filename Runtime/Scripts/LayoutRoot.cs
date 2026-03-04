@@ -13,6 +13,7 @@
 */
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Poke.UI
 {
@@ -47,7 +48,7 @@ namespace Poke.UI
         }
 
         public void UpdateLayout() {
-            if(m_log) Debug.Log($"[Root]: Update Layout ({Time.unscaledTime:f5})");
+            if(m_log) Debug.Log($"[Root]: STARTING LAYOUT REFRESH ({Time.frameCount})");
             
             _reverse.Clear();
                 
@@ -99,5 +100,15 @@ namespace Poke.UI
                 Debug.LogError($"[Root]: Failed to remove \"{layout.name}\" (not found)");
             }
         }
+
+        // public void SetLayoutHorizontal() {
+        //     if(m_log) Debug.Log("[Root]: SetLayoutHorizontal");
+        //     if(_dirty)
+        //         UpdateLayout();
+        // }
+        // public void SetLayoutVertical() {
+        //     Debug.Log("[Root]: SetLayoutVertical");
+        //     // wow
+        // }
     }
 }

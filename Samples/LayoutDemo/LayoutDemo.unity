@@ -4237,7 +4237,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b0a3eca52933fb4786ca2737c131c31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Poke.UILayout
-  m_log: 0
+  m_log: 1
   m_ignoreLayout: 0
   m_sizing:
     x: 1
@@ -6343,7 +6343,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e37e2b5f1962004c8f10779a2fcf23a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Poke.UI.LayoutText
-  m_log: 1
+  m_log: 0
   m_ignoreLayout: 0
   m_sizing:
     x: 2

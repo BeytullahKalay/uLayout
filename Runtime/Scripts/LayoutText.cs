@@ -16,29 +16,22 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Poke.UI {
+namespace Poke.UI
+{
     [RequireComponent(typeof(TMP_Text))]
-    public class LayoutText : LayoutItem, ILayoutSelfController
+    public class LayoutText : LayoutItem
     {
         [Header("Text")]
         [SerializeField, Min(0)] private float m_maxFontSize;
         
         private TMP_Text _text;
-        private DrivenRectTransformTracker _rectTracker;
         private Vector2 _preferredSize;
         private float _fontSize;
-        private bool _dirty;
         private string _str;
         
         protected override void Awake() {
             base.Awake();
             _text = GetComponent<TMP_Text>();
-            _rectTracker = new DrivenRectTransformTracker();
-        }
-
-        protected override void OnValidate() {
-            base.OnValidate();
-            _dirty = true;
         }
 
         protected override void OnEnable() {
@@ -48,65 +41,62 @@ namespace Poke.UI {
             _str = _text.text;
             _fontSize = _text.fontSize;
             _text.ForceMeshUpdate(true, true);
-            _dirty = true;
-            
-            Log($"line count: {_text.textInfo.lineCount}");
+
+            _preferredSize = _text.GetPreferredValues();
+            Log($"preferred size: {_preferredSize}, {_text.textInfo.lineCount} lines");
         }
 
         public override void Update() {
-            //if(m_log) Debug.Log($"[LT:{gameObject.name}]: update");
+            base.Update();
             
-            _rectTracker.Clear();
-            if(m_sizing.x == SizingMode.FitContent)
-                _rectTracker.Add(this, _rect, DrivenTransformProperties.SizeDeltaX);
-            if(m_sizing.y == SizingMode.FitContent)
-                _rectTracker.Add(this, _rect, DrivenTransformProperties.SizeDeltaY);
-            
-            _text.textWrappingMode = m_sizing.x == SizingMode.Grow ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
+            _text.textWrappingMode = m_sizing.x != SizingMode.FitContent ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
             
             if(String.CompareOrdinal(_str, _text.text) != 0) {
                 _str = _text.text;
                 _dirty = true;
             }
 
-            if(!Mathf.Approximately(_fontSize, _text.fontSize)) {
+            if(!Mathf.Approximately(_text.fontSize, _fontSize)) {
+                _fontSize = _text.fontSize;
                 _dirty = true;
             }
-            
-            if(!Mathf.Approximately(_rect.rect.size.x, _preferredSize.x) && m_sizing.x != SizingMode.Grow) {
-                _dirty = true;
+                
+            if(_dirty) {
+                _text.ForceMeshUpdate(true, true);
+                _preferredSize = _text.GetPreferredValues();
             }
-            if(!Mathf.Approximately(_rect.rect.size.y, _preferredSize.y) && m_sizing.y != SizingMode.Grow) {
-                _dirty = true;
+
+            if(_dirty && m_sizing.x == SizingMode.FitContent && m_sizing.y != SizingMode.Grow) {
+                Log("Fit Size X");
+                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _preferredSize.x);
+            }
+            if(_dirty && m_sizing.y == SizingMode.FitContent && m_sizing.x != SizingMode.Grow) {
+                Log("Fit Size Y");
+                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _preferredSize.y);
             }
 
             if(_dirty) {
+                if(_parent) {
+                    _parent.SetDirty();
+                }
                 LayoutRebuilder.MarkLayoutForRebuild(_rect);
-            }
-            
-            base.Update();
-        }
-
-        public void SetLayoutHorizontal() {
-            if(_dirty) {
-                if(m_sizing.x == SizingMode.FitContent) {
-                    Log("SetLayoutHorizontal");
-                    _preferredSize.x = LayoutUtility.GetPreferredWidth(_rect);
-                    _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _preferredSize.x);
-                }
-            }
-        }
-        
-        public void SetLayoutVertical() {
-            if(_dirty) {
-                if(m_sizing.y == SizingMode.FitContent) {
-                    Log($"SetLayoutVertical ({_text.textInfo.lineCount} lines)");
-                    _preferredSize.y = LayoutUtility.GetPreferredHeight(_rect);
-                    Log($"height: {_preferredSize.y}");
-                    _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _preferredSize.y);
-                }
-
                 _dirty = false;
+            }
+        }
+
+        public override void GrowSizingXCallback(float x) {
+            if(m_sizing.y == SizingMode.FitContent) {
+                _text.ForceMeshUpdate(true, true);
+                _preferredSize = _text.GetPreferredValues();
+                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _preferredSize.y);
+            }
+        }
+
+        public override void GrowSizingYCallback(float y) {
+            if(m_sizing.x == SizingMode.FitContent) {
+                _text.ForceMeshUpdate(true, true);
+                _preferredSize = _text.GetPreferredValues();
+                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _preferredSize.x);
             }
         }
 

@@ -13,7 +13,6 @@
 */
 using System;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Poke.UI
 {
@@ -50,9 +49,10 @@ namespace Poke.UI
         protected DrivenTransformProperties _trackerProps;
         protected RectTransform _parentRect;
         protected Layout _parent;
-
+        protected bool _dirty;
+        
         private Vector2 _parentSize;
-
+        
         [Serializable]
         public struct SizeModes
         {
@@ -85,6 +85,7 @@ namespace Poke.UI
             }
 
             _trackerProps = DrivenTransformProperties.None;
+            _dirty = true;
         }
 
         protected virtual void OnDisable() {
@@ -94,6 +95,21 @@ namespace Poke.UI
         }
 
         public virtual void Update() {
+            _tracker.Clear();
+            _trackerProps = DrivenTransformProperties.None;
+            
+            if(m_sizing.x == SizingMode.FitContent || m_sizing.x == SizingMode.Grow)
+                _trackerProps |= DrivenTransformProperties.SizeDeltaX;
+            if(m_sizing.y == SizingMode.FitContent || m_sizing.y == SizingMode.Grow)
+                _trackerProps |= DrivenTransformProperties.SizeDeltaY;
+
+            if(_parent && !m_ignoreLayout) {
+                _trackerProps |= DrivenTransformProperties.AnchoredPosition | DrivenTransformProperties.Pivot |
+                                 DrivenTransformProperties.Anchors;
+            }
+            
+            _tracker.Add(this, _rect, _trackerProps);
+            
             // Do grow sizing here if parent is not a Layout
             // Grow does nothing if there is no parent (prefab editing)
             if(!_parent && _parentRect) {
@@ -108,23 +124,6 @@ namespace Poke.UI
                 }
                 
             }
-            
-            _trackerProps = DrivenTransformProperties.None;
-            _tracker.Clear();
-        }
-
-        private void LateUpdate() {
-            if(m_sizing.x == SizingMode.FitContent || m_sizing.x == SizingMode.Grow)
-                _trackerProps |= DrivenTransformProperties.SizeDeltaX;
-            if(m_sizing.y == SizingMode.FitContent || m_sizing.y == SizingMode.Grow)
-                _trackerProps |= DrivenTransformProperties.SizeDeltaY;
-
-            if(_parent && !m_ignoreLayout) {
-                _trackerProps |= DrivenTransformProperties.AnchoredPosition | DrivenTransformProperties.Pivot |
-                                 DrivenTransformProperties.Anchors;
-            }
-            
-            _tracker.Add(this, _rect, _trackerProps);
         }
 
         protected virtual void OnValidate() {
@@ -154,8 +153,12 @@ namespace Poke.UI
             topmostTransform.SetParent(layoutRootObject.transform, false);
         }
 #endif
-        
-        public void SetParentDirty() {
+
+        public virtual void GrowSizingXCallback(float x) { }
+        public virtual void GrowSizingYCallback(float y) { }
+
+        public virtual void SetDirty() {
+            _dirty = true;
             if(_parent) {
                 _parent.SetDirty();
             }

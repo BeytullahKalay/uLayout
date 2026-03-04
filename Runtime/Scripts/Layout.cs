@@ -14,7 +14,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Poke.UI
 {
@@ -46,7 +45,6 @@ namespace Poke.UI
         private List<ChildInfo>             _children = new();
         private Vector2                     _contentSize;
         private int                         _depth;
-        private bool                        _dirty;
         private Vector2Int                  _growChildCount;
         private List<LayoutItem>            _growChildren;
         private int                         _ignoreCount;
@@ -122,7 +120,6 @@ namespace Poke.UI
             
             _root?.RegisterLayout(this);
             RefreshChildCache();
-            _dirty = true;
         }
 
         protected override void OnDisable() {
@@ -279,13 +276,13 @@ namespace Poke.UI
                     switch(m_direction) {
                         case LayoutDirection.Row:
                         case LayoutDirection.RowReverse:
-                            primarySize += growX ? 0 : elem.rect.sizeDelta.x * elem.rect.localScale.x;
-                            maxCrossSize = Mathf.Max(maxCrossSize, growY ? 0 : elem.rect.sizeDelta.y * elem.rect.localScale.y);
+                            primarySize += growX ? 0 : elem.rect.rect.width * elem.rect.localScale.x;
+                            maxCrossSize = Mathf.Max(maxCrossSize, growY ? 0 : elem.rect.rect.height * elem.rect.localScale.y);
                             break;
                         case LayoutDirection.Column:
                         case LayoutDirection.ColumnReverse:
-                            primarySize += growY ? 0 : elem.rect.sizeDelta.y * elem.rect.localScale.y;
-                            maxCrossSize = Mathf.Max(maxCrossSize, growX ? 0 : elem.rect.sizeDelta.x * elem.rect.localScale.x);
+                            primarySize += growY ? 0 : elem.rect.rect.height * elem.rect.localScale.y;
+                            maxCrossSize = Mathf.Max(maxCrossSize, growX ? 0 : elem.rect.rect.width * elem.rect.localScale.x);
                             break;
                     }
                 }
@@ -370,12 +367,15 @@ namespace Poke.UI
                             if(li.SizeMode.x == SizingMode.Grow) {
                                 li.Rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
                                 _contentSize.x += size.x;
+                                li.GrowSizingXCallback(size.x);
                             }
 
                             if(li.SizeMode.y == SizingMode.Grow) {
                                 li.Rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
                                 _contentSize.y = Mathf.Max(size.y, _contentSize.y);
+                                li.GrowSizingYCallback(size.y);
                             }
+                            
                         }
 
                         break;
@@ -389,11 +389,13 @@ namespace Poke.UI
                             if(li.SizeMode.y == SizingMode.Grow) {
                                 li.Rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
                                 _contentSize.y += size.y;
+                                li.GrowSizingYCallback(size.y);
                             }
 
                             if(li.SizeMode.x == SizingMode.Grow) {
                                 li.Rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
                                 _contentSize.x = Mathf.Max(size.x, _contentSize.x);
+                                li.GrowSizingXCallback(size.x);
                             }
                         }
                         
@@ -809,8 +811,8 @@ namespace Poke.UI
             return -1;
         }
 
-        public void SetDirty() {
-            _dirty = true;
+        public override void SetDirty() {
+            base.SetDirty();
             _root.SetDirty();
         }
         
