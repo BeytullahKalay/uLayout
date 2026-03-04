@@ -50,10 +50,8 @@ namespace Poke.UI
 
             if(serializedObject.hasModifiedProperties) {
                 serializedObject.ApplyModifiedProperties();
-                _item.SetParentDirty();
-                if(_item is Layout l) {
-                    l.SetDirty();
-                }
+                _item.SetDirty();
+                EditorApplication.QueuePlayerLoopUpdate();
             }
         }
     }

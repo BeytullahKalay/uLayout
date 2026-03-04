@@ -13,6 +13,7 @@
 */
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Poke.UI
 {
@@ -47,7 +48,7 @@ namespace Poke.UI
         }
 
         public void UpdateLayout() {
-            if(m_log) Debug.Log($"[Root]: Update Layout ({Time.unscaledTime:f5})");
+            if(m_log) Debug.Log($"[Root]: STARTING LAYOUT REFRESH ({Time.frameCount})");
             
             _reverse.Clear();
                 
@@ -80,7 +81,7 @@ namespace Poke.UI
         }
 
         public void RegisterLayout(Layout layout) {
-            if(m_log) Debug.Log($"Registered \"{layout.name}\" at depth [{layout.Depth}]");
+            if(m_log) Debug.Log($"[Root]: Registered \"{layout.name}\" at depth [{layout.Depth}]");
             
             layout.OnLayoutChanged += SetDirty;
             _layouts.Add(layout);
@@ -93,11 +94,21 @@ namespace Poke.UI
                 layout.OnLayoutChanged -= SetDirty;
                 
                 SetDirty();
-                if(m_log) Debug.Log($"Removed \"{layout.name}\"");
+                if(m_log) Debug.Log($"[Root]: Removed \"{layout.name}\"");
             }
             else {
-                Debug.LogError($"Failed to remove \"{layout.name}\" (not found)");
+                Debug.LogError($"[Root]: Failed to remove \"{layout.name}\" (not found)");
             }
         }
+
+        // public void SetLayoutHorizontal() {
+        //     if(m_log) Debug.Log("[Root]: SetLayoutHorizontal");
+        //     if(_dirty)
+        //         UpdateLayout();
+        // }
+        // public void SetLayoutVertical() {
+        //     Debug.Log("[Root]: SetLayoutVertical");
+        //     // wow
+        // }
     }
 }

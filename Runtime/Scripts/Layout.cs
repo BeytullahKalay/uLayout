@@ -33,10 +33,11 @@ namespace Poke.UI
         [SerializeField] private Justification      m_justifyContent;
         [SerializeField] private Alignment          m_alignContent;
         [SerializeField] private float              m_innerSpacing;
+        [SerializeField] private bool               m_ignoreChildScale;
 
         public int ChildCount =>            _children?.Count ?? 0;
         public int Depth =>                 _depth;
-        public int GrowChildCount =>        _growChildren?.Count ?? 0;
+        public Vector2Int GrowChildCount => _growChildCount;
         public LayoutDirection Direction => m_direction;
         public bool NeedsRefresh =>         _dirty;
 
@@ -45,12 +46,9 @@ namespace Poke.UI
         private List<ChildInfo>             _children = new();
         private Vector2                     _contentSize;
         private int                         _depth;
-        private bool                        _dirty;
         private Vector2Int                  _growChildCount;
-        private List<LayoutItem>            _growChildren;
         private int                         _ignoreCount;
         private Vector2                     _lastSize;
-        private LayoutItem[]                _layoutItems;
         private readonly Vector3[]          _rectCorners = new Vector3[4];
         private LayoutRoot                  _root;
 
@@ -82,6 +80,7 @@ namespace Poke.UI
         {
             public int index;
             public RectTransform rect;
+            public LayoutItem li;
             public Vector2 size;
             public bool enabled;
             public bool ignoreLayout;
@@ -89,11 +88,6 @@ namespace Poke.UI
         #endregion
         
         #region Layout MonoBehavior
-        protected override void Awake() {
-            base.Awake();
-            _growChildren = new List<LayoutItem>();
-        }
-
         protected override void OnEnable() {
             base.OnEnable();
             
@@ -121,7 +115,6 @@ namespace Poke.UI
             
             _root?.RegisterLayout(this);
             RefreshChildCache();
-            _dirty = true;
         }
 
         protected override void OnDisable() {
@@ -155,11 +148,11 @@ namespace Poke.UI
                     layoutChanged = true;
                 }
 
-                LayoutItem li = _layoutItems[c.index];
-                if(li) {
+
+                if(c.li) {
                     // check if ignore layout toggled this frame
-                    if(li.IgnoreLayout != c.ignoreLayout) {
-                        c.ignoreLayout = li.IgnoreLayout;
+                    if(c.li.IgnoreLayout != c.ignoreLayout) {
+                        c.ignoreLayout = c.li.IgnoreLayout;
                         layoutChanged = true;
                     }
                 }
@@ -172,13 +165,15 @@ namespace Poke.UI
                     );
                 }
                 
+                Vector2 scale = m_ignoreChildScale ? Vector2.one : c.rect.localScale;
+                
                 // check if item changed size this frame
-                if(!(li && li.SizeMode.x == SizingMode.Grow) && !Mathf.Approximately(c.rect.rect.size.x, c.size.x)) {
-                    c.size = c.size.SetX(c.rect.rect.size.x); 
+                if(!(c.li && c.li.SizeMode.x == SizingMode.Grow) && !Mathf.Approximately(c.rect.rect.size.x * scale.x, c.size.x)) {
+                    c.size = c.size.SetX(c.rect.rect.size.x * c.rect.localScale.x); 
                     layoutChanged = true;
                 }
-                if(!(li && li.SizeMode.y == SizingMode.Grow) && !Mathf.Approximately(c.rect.rect.size.y, c.size.y)) {
-                    c.size = c.size.SetY(c.rect.rect.size.y);
+                if(!(c.li && c.li.SizeMode.y == SizingMode.Grow) && !Mathf.Approximately(c.rect.rect.size.y * scale.y, c.size.y)) {
+                    c.size = c.size.SetY(c.rect.rect.size.y * c.rect.localScale.y);
                     layoutChanged = true;
                 }
             }
@@ -238,7 +233,6 @@ namespace Poke.UI
         
         #region LAYOUT PASSES
         public void ComputeFitSize() {
-            _growChildren.Clear();
             _growChildCount = new Vector2Int(0, 0);
             _ignoreCount = 0;
             
@@ -264,12 +258,10 @@ namespace Poke.UI
                     
                     bool growX = false, growY = false;
                     
-                    li = _layoutItems[elem.index];
-                    if(li) {
-                        growX = li.SizeMode.x == SizingMode.Grow;
-                        growY = li.SizeMode.y == SizingMode.Grow;
+                    if(elem.li) {
+                        growX = elem.li.SizeMode.x == SizingMode.Grow;
+                        growY = elem.li.SizeMode.y == SizingMode.Grow;
                         if(growX || growY) {
-                            _growChildren.Add(li);
                             _growChildCount.x += growX ? 1 : 0;
                             _growChildCount.y += growY ? 1 : 0;
                         }
@@ -278,13 +270,13 @@ namespace Poke.UI
                     switch(m_direction) {
                         case LayoutDirection.Row:
                         case LayoutDirection.RowReverse:
-                            primarySize += growX ? 0 : elem.rect.sizeDelta.x;
-                            maxCrossSize = Mathf.Max(maxCrossSize, growY ? 0 : elem.rect.sizeDelta.y);
+                            primarySize += growX ? 0 : elem.size.x;
+                            maxCrossSize = Mathf.Max(maxCrossSize, growY ? 0 : elem.size.y);
                             break;
                         case LayoutDirection.Column:
                         case LayoutDirection.ColumnReverse:
-                            primarySize += growY ? 0 : elem.rect.sizeDelta.y;
-                            maxCrossSize = Mathf.Max(maxCrossSize, growX ? 0 : elem.rect.sizeDelta.x);
+                            primarySize += growY ? 0 : elem.size.y;
+                            maxCrossSize = Mathf.Max(maxCrossSize, growX ? 0 : elem.size.x);
                             break;
                     }
                 }
@@ -352,8 +344,8 @@ namespace Poke.UI
         }
 
         public void GrowChildren() {
-            if(_growChildren.Count > 0) {
-                if(m_log) Debug.Log($"[L:{gameObject.name}] growing {_growChildren.Count} children");
+            if(_growChildCount.x > 0 || _growChildCount.y > 0) {
+                if(m_log) Debug.Log($"[L:{gameObject.name}] growing {_growChildCount} children");
                 
                 Vector2 size;
                 float crossSize;
@@ -365,15 +357,22 @@ namespace Poke.UI
                         crossSize = _rect.rect.size.y - m_padding.top - m_padding.bottom;
                         size = new Vector2(leftover / _growChildCount.x, crossSize);
 
-                        foreach(LayoutItem li in _growChildren) {
-                            if(li.SizeMode.x == SizingMode.Grow) {
-                                li.Rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
+                        foreach(ChildInfo c in _children) {
+                            if(!c.li)
+                                continue;
+                            
+                            if(c.li.SizeMode.x == SizingMode.Grow) {
+                                c.size.x = size.x;
+                                c.rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
                                 _contentSize.x += size.x;
+                                c.li.GrowSizingXCallback(size.x);
                             }
 
-                            if(li.SizeMode.y == SizingMode.Grow) {
-                                li.Rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
+                            if(c.li.SizeMode.y == SizingMode.Grow) {
+                                c.size.y = size.y;
+                                c.rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
                                 _contentSize.y = Mathf.Max(size.y, _contentSize.y);
+                                c.li.GrowSizingYCallback(size.y);
                             }
                         }
 
@@ -384,15 +383,22 @@ namespace Poke.UI
                         crossSize = _rect.rect.size.x - m_padding.left - m_padding.right;
                         size = new Vector2(crossSize, leftover / _growChildCount.y);
 
-                        foreach(LayoutItem li in _growChildren) {
-                            if(li.SizeMode.y == SizingMode.Grow) {
-                                li.Rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
+                        foreach(ChildInfo c in _children) {
+                            if(!c.li)
+                                continue;
+                            
+                            if(c.li.SizeMode.y == SizingMode.Grow) {
+                                c.size.y = size.y;
+                                c.rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
                                 _contentSize.y += size.y;
+                                c.li.GrowSizingYCallback(size.y);
                             }
 
-                            if(li.SizeMode.x == SizingMode.Grow) {
-                                li.Rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
+                            if(c.li.SizeMode.x == SizingMode.Grow) {
+                                c.size.x = size.x;
+                                c.rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
                                 _contentSize.x = Mathf.Max(size.x, _contentSize.x);
+                                c.li.GrowSizingXCallback(size.x);
                             }
                         }
                         
@@ -434,7 +440,7 @@ namespace Poke.UI
                                 SetAnchorPivotX(c.rect, 0);
 
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetX(primaryOffset);
-                                primaryOffset += c.rect.sizeDelta.x + m_innerSpacing;
+                                primaryOffset += c.size.x + m_innerSpacing;
                             }
                             break;
                         case Justification.Center:
@@ -447,9 +453,9 @@ namespace Poke.UI
                                 
                                 SetAnchorPivotX(c.rect, 0.5f);
 
-                                primaryOffset += c.rect.sizeDelta.x / 2;
+                                primaryOffset += c.size.x / 2;
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetX(primaryOffset + m_padding.left);
-                                primaryOffset += c.rect.sizeDelta.x / 2 + m_innerSpacing;
+                                primaryOffset += c.size.x / 2 + m_innerSpacing;
                             }
                             break;
                         case Justification.End:
@@ -462,7 +468,7 @@ namespace Poke.UI
                                 
                                 SetAnchorPivotX(c.rect, 1);
 
-                                primaryOffset += c.rect.sizeDelta.x;
+                                primaryOffset += c.size.x;
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetX(primaryOffset);
                                 primaryOffset += m_innerSpacing;
                             }
@@ -485,7 +491,7 @@ namespace Poke.UI
                                     primaryOffset += spacing;
                                 }
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetX(primaryOffset);
-                                primaryOffset += c.rect.sizeDelta.x;
+                                primaryOffset += c.size.x;
                                 index++;
                             }
                             break;
@@ -504,7 +510,7 @@ namespace Poke.UI
                                 
                                 SetAnchorPivotX(c.rect, 0);
 
-                                primaryOffset -= c.rect.sizeDelta.x + m_innerSpacing;
+                                primaryOffset -= c.size.x + m_innerSpacing;
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetX(primaryOffset);
                             }
                             break;
@@ -518,9 +524,9 @@ namespace Poke.UI
                                 
                                 SetAnchorPivotX(c.rect, 0.5f);
 
-                                primaryOffset -= c.rect.sizeDelta.x / 2;
+                                primaryOffset -= c.size.x / 2;
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetX(primaryOffset - m_padding.right);
-                                primaryOffset -= c.rect.sizeDelta.x / 2 + m_innerSpacing;
+                                primaryOffset -= c.size.x / 2 + m_innerSpacing;
                             }
                             break;
                         case Justification.End:
@@ -534,7 +540,7 @@ namespace Poke.UI
                                 SetAnchorPivotX(c.rect, 1);
 
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetX(-primaryOffset);
-                                primaryOffset += c.rect.sizeDelta.x + m_innerSpacing;
+                                primaryOffset += c.size.x + m_innerSpacing;
                             }
                             break;
                         case Justification.SpaceBetween:
@@ -553,7 +559,7 @@ namespace Poke.UI
                                 SetAnchorPivotX(c.rect, 1);
                                 
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetX(-primaryOffset);
-                                primaryOffset += c.rect.sizeDelta.x + spacing;
+                                primaryOffset += c.size.x + spacing;
                             }
                             break;
                     }
@@ -572,7 +578,7 @@ namespace Poke.UI
                                 SetAnchorPivotY(c.rect, 1);
 
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetY(primaryOffset);
-                                primaryOffset -= c.rect.sizeDelta.y + m_innerSpacing;
+                                primaryOffset -= c.size.y + m_innerSpacing;
                             }
                             break;
                         case Justification.Center:
@@ -585,9 +591,9 @@ namespace Poke.UI
                                 
                                 SetAnchorPivotY(c.rect, 0.5f);
 
-                                primaryOffset -= c.rect.sizeDelta.y / 2;
+                                primaryOffset -= c.size.y / 2;
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetY(primaryOffset - m_padding.top);
-                                primaryOffset -= c.rect.sizeDelta.y / 2 + m_innerSpacing;
+                                primaryOffset -= c.size.y / 2 + m_innerSpacing;
                             }
                             break;
                         case Justification.End:
@@ -600,7 +606,7 @@ namespace Poke.UI
                                 
                                 SetAnchorPivotY(c.rect, 0);
 
-                                primaryOffset -= c.rect.sizeDelta.y;
+                                primaryOffset -= c.size.y;
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetY(primaryOffset - m_padding.top);
                                 primaryOffset -= m_innerSpacing;
                             }
@@ -623,7 +629,7 @@ namespace Poke.UI
                                     primaryOffset += spacing;
                                 }
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetY(-primaryOffset);
-                                primaryOffset += c.rect.sizeDelta.y;
+                                primaryOffset += c.size.y;
 
                                 index++;
                             }
@@ -643,7 +649,7 @@ namespace Poke.UI
                                 
                                 SetAnchorPivotY(c.rect, 1);
 
-                                primaryOffset += c.rect.sizeDelta.y;
+                                primaryOffset += c.size.y;
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetY(primaryOffset);
                                 primaryOffset += m_innerSpacing;
                             }
@@ -658,9 +664,9 @@ namespace Poke.UI
                                 
                                 SetAnchorPivotY(c.rect, 0.5f);
 
-                                primaryOffset += c.rect.sizeDelta.y / 2;
+                                primaryOffset += c.size.y / 2;
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetY(primaryOffset - m_padding.top);
-                                primaryOffset += c.rect.sizeDelta.y / 2 + m_innerSpacing;
+                                primaryOffset += c.size.y / 2 + m_innerSpacing;
                             }
                             break;
                         case Justification.End:
@@ -674,7 +680,7 @@ namespace Poke.UI
                                 SetAnchorPivotY(c.rect, 0);
 
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetY(primaryOffset);
-                                primaryOffset += c.rect.sizeDelta.y + m_innerSpacing;
+                                primaryOffset += c.size.y + m_innerSpacing;
                             }
                             break;
                         case Justification.SpaceBetween:
@@ -693,7 +699,7 @@ namespace Poke.UI
                                 SetAnchorPivotY(c.rect, 0);
                                 
                                 c.rect.anchoredPosition = c.rect.anchoredPosition.SetY(primaryOffset);
-                                primaryOffset += c.rect.sizeDelta.y + spacing;
+                                primaryOffset += c.size.y + spacing;
                             }
                             break;
                     }
@@ -808,8 +814,8 @@ namespace Poke.UI
             return -1;
         }
 
-        public void SetDirty() {
-            _dirty = true;
+        public override void SetDirty() {
+            base.SetDirty();
             _root.SetDirty();
         }
         
@@ -817,28 +823,18 @@ namespace Poke.UI
             _children.Clear();
             
             int childCount = transform.childCount;
-
-            // only reallocate layoutItems array if child count has grown (or first refresh)
-            if(_layoutItems == null || childCount > _layoutItems.Length) {
-                _layoutItems = new LayoutItem[childCount];
-            }
-            else {
-                for(int i = 0; i < _layoutItems.Length; i++) {
-                    _layoutItems[i] = null;
-                }
-            }
             
             for(int i = 0; i < childCount; i++) {
                 RectTransform rt = transform.GetChild(i).GetComponent<RectTransform>();
                 
                 LayoutItem li = rt.GetComponent<LayoutItem>();
-                _layoutItems[i] = li;
                 
                 _children.Add(
                     new ChildInfo {
                         index = i,
                         rect = rt,
-                        size = rt.rect.size,
+                        li = li,
+                        size = rt.rect.size * (m_ignoreChildScale ? Vector2.one : rt.localScale),
                         enabled = rt.gameObject.activeInHierarchy,
                         ignoreLayout = li && li.IgnoreLayout
                     }
