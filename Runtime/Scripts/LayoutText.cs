@@ -12,9 +12,9 @@
     copies or substantial portions of the Software.
 */
 using System;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 namespace Poke.UI
 {
@@ -40,6 +40,7 @@ namespace Poke.UI
             _text.ForceMeshUpdate(true, true);
 
             _preferredSize = _text.GetPreferredValues();
+            DoFitSizing(_preferredSize);
             Log($"preferred size: {_preferredSize}, {_text.textInfo.lineCount} lines");
         }
 
@@ -61,15 +62,7 @@ namespace Poke.UI
             if(_dirty) {
                 _text.ForceMeshUpdate(true, true);
                 _preferredSize = _text.GetPreferredValues();
-            }
-
-            if(_dirty && m_sizing.x == SizingMode.FitContent && m_sizing.y != SizingMode.Grow) {
-                Log("Fit Size X");
-                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _preferredSize.x);
-            }
-            if(_dirty && m_sizing.y == SizingMode.FitContent && m_sizing.x != SizingMode.Grow) {
-                Log("Fit Size Y");
-                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _preferredSize.y);
+                DoFitSizing(_preferredSize);
             }
 
             if(_dirty) {
@@ -81,20 +74,55 @@ namespace Poke.UI
             }
         }
 
-        public override void GrowSizingXCallback(float x) {
+        protected override void SetDrivenProperties() {
+            if(m_sizing.x == SizingMode.FitContent || m_sizing.x == SizingMode.Grow)
+                _trackerProps |= DrivenTransformProperties.SizeDeltaX;
+            if(m_sizing.y == SizingMode.FitContent || m_sizing.y == SizingMode.Grow)
+                _trackerProps |= DrivenTransformProperties.SizeDeltaY;
+
+            if(_parent && !m_ignoreLayout) {
+                _trackerProps |= DrivenTransformProperties.AnchoredPosition | DrivenTransformProperties.Pivot |
+                                 DrivenTransformProperties.Anchors;
+            }
+        }
+
+        private void DoFitSizing(Vector2 size) {
+            if(m_sizing.x == SizingMode.FitContent && m_sizing.y != SizingMode.Grow) {
+                Log("Fit Size X");
+                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
+            }
+            if(m_sizing.y == SizingMode.FitContent && m_sizing.x != SizingMode.Grow) {
+                Log("Fit Size Y");
+                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
+            }
+        }
+        
+        public override float GrowSizingXCallback(float x) {
+            base.GrowSizingXCallback(x);
+            
             if(m_sizing.y == SizingMode.FitContent) {
                 _text.ForceMeshUpdate(true, true);
                 _preferredSize = _text.GetPreferredValues();
                 _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _preferredSize.y);
+                Log($"responsive y ({_preferredSize.y})");
+                return _preferredSize.y;
             }
+
+            return -1;
         }
 
-        public override void GrowSizingYCallback(float y) {
+        public override float GrowSizingYCallback(float y) {
+            base.GrowSizingYCallback(y);
+            
             if(m_sizing.x == SizingMode.FitContent) {
                 _text.ForceMeshUpdate(true, true);
                 _preferredSize = _text.GetPreferredValues();
                 _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _preferredSize.x);
+                Log($"responsive x ({_preferredSize.x})");
+                return _preferredSize.x;
             }
+
+            return -1;
         }
 
         private void Log(object msg) {

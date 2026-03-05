@@ -60,53 +60,37 @@ namespace Poke.UI
             public SizingMode y;
         }
 
+        #region LayoutItem MonoBehavior
         protected virtual void Awake() {
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             ValidatePrefabStage();
-#endif
+            #endif
             
             _rect = GetComponent<RectTransform>();
             _tracker = new DrivenRectTransformTracker();
             
-            // parent will always exist EXCEPT for in prefab editing
-            // (bc Canvas has a RectTransform)
-            if(transform.parent) {
-                _parentRect = transform.parent.GetComponent<RectTransform>();
-            }
             _parentSize = _parentRect ? _parentRect.rect.size : default;
         }
 
         protected virtual void OnEnable() {
             if(transform.parent) {
+                _parentRect = transform.parent.GetComponent<RectTransform>();
                 _parent = transform.parent.GetComponent<Layout>();
-                if(_parent) {
-                    _parent.RefreshChildCache();
-                }
             }
 
             _trackerProps = DrivenTransformProperties.None;
             _dirty = true;
         }
-
-        protected virtual void OnDisable() {
-            if(_parent) {
-                _parent.RefreshChildCache();
-            }
+        
+        protected virtual void OnValidate() {
+            Awake();
         }
 
         public virtual void Update() {
             _tracker.Clear();
             _trackerProps = DrivenTransformProperties.None;
             
-            if(m_sizing.x == SizingMode.FitContent || m_sizing.x == SizingMode.Grow)
-                _trackerProps |= DrivenTransformProperties.SizeDeltaX;
-            if(m_sizing.y == SizingMode.FitContent || m_sizing.y == SizingMode.Grow)
-                _trackerProps |= DrivenTransformProperties.SizeDeltaY;
-
-            if(_parent && !m_ignoreLayout) {
-                _trackerProps |= DrivenTransformProperties.AnchoredPosition | DrivenTransformProperties.Pivot |
-                                 DrivenTransformProperties.Anchors;
-            }
+            SetDrivenProperties();
             
             _tracker.Add(this, _rect, _trackerProps);
             
@@ -125,12 +109,21 @@ namespace Poke.UI
                 
             }
         }
+        #endregion
 
-        protected virtual void OnValidate() {
-            Awake();
+        protected virtual void SetDrivenProperties() {
+            if((m_sizing.x == SizingMode.FitContent && transform.childCount > 0) || m_sizing.x == SizingMode.Grow)
+                _trackerProps |= DrivenTransformProperties.SizeDeltaX;
+            if((m_sizing.y == SizingMode.FitContent && transform.childCount > 0) || m_sizing.y == SizingMode.Grow)
+                _trackerProps |= DrivenTransformProperties.SizeDeltaY;
+
+            if(_parent && !m_ignoreLayout) {
+                _trackerProps |= DrivenTransformProperties.AnchoredPosition | DrivenTransformProperties.Pivot |
+                                 DrivenTransformProperties.Anchors;
+            }
         }
 
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
         private void ValidatePrefabStage() {
             var prefabStage = UnityEditor.SceneManagement.PrefabStageUtility.GetPrefabStage(gameObject);
             if(prefabStage == null)
@@ -152,10 +145,19 @@ namespace Poke.UI
             UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(layoutRootObject, prefabStage.scene);
             topmostTransform.SetParent(layoutRootObject.transform, false);
         }
-#endif
+        #endif
 
-        public virtual void GrowSizingXCallback(float x) { }
-        public virtual void GrowSizingYCallback(float y) { }
+        public virtual float GrowSizingXCallback(float x) {
+            _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, x);
+            if(m_log) Debug.Log($"[LI:{gameObject.name}]: growing x size ({x})");
+            return -1;
+        }
+
+        public virtual float GrowSizingYCallback(float y) {
+            _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, y);
+            if(m_log) Debug.Log($"[LI:{gameObject.name}]: growing y size ({y})");
+            return -1;
+        }
 
         public virtual void SetDirty() {
             _dirty = true;

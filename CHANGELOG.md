@@ -1,4 +1,12 @@
-﻿## [1.5.3] - 2026-03-04
+﻿## [1.5.4] - 2026-03-05
+
+### Fixed
+- Partially rewrote grow sizing algorithm to be more stable & ensure correct order
+- Improved `LayoutText` grow sizing behavior (again)
+  - Fixed text container not resizing if text has to change shape in response to grow width
+- FINALLY fixed Layouts looking completely wrong for one frame after being enabled for the first time (as far as I can tell)
+
+## [1.5.3] - 2026-03-04
 
 ### Changed
 - `Layout` takes into account child transform scale when calculating fit size (this can be disabled if you want to ignore child scale)

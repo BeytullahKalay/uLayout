@@ -11,9 +11,10 @@
     The above copyright notice and this permission notice shall be included in all
     copies or substantial portions of the Software.
 */
+
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Poke.UI
 {
@@ -40,20 +41,30 @@ namespace Poke.UI
         public void SetDirty() {
             _dirty = true;
         }
-        
+
+        public void Update() {
+            foreach(Layout layout in _layouts) {
+                layout.Tick();
+            }
+        }
+
         public void LateUpdate() {
             if(_dirty) {
                 UpdateLayout();
             }
         }
 
-        public void UpdateLayout() {
-            if(m_log) Debug.Log($"[Root]: STARTING LAYOUT REFRESH ({Time.frameCount})");
+        private void Log(object msg) {
+            if(m_log) Debug.Log($"<color=white>[Root]: {msg}</color>");
+        }
+        
+        private void UpdateLayout() {
+            Log($"STARTING LAYOUT REFRESH ({Time.frameCount})");
             
             _reverse.Clear();
                 
             // fit sizing pass (0)
-            if(m_log) Debug.Log($"[Root]: Fit Size Pass");
+            Log("Fit Size Pass");
             foreach(Layout l in _layouts) {
                 if(l.NeedsRefresh) {
                     l.ComputeFitSize();
@@ -62,53 +73,48 @@ namespace Poke.UI
             }
 
             // grow sizing pass (1)
-            if(m_log) Debug.Log($"[Root]: Grow Size Pass");
-            foreach(Layout l in _reverse) {
-                if(l.NeedsRefresh) {
-                    l.GrowChildren();
+            Log("Grow Size Pass (DFS)");
+            if(_reverse.Count > 0) {
+                // start the grow propagation from the top-level layouts
+                int lowestDepth = Int32.MaxValue;
+                foreach(Layout l in _reverse) {
+                    lowestDepth = Mathf.Min(l.Depth, lowestDepth);
+                }
+
+                foreach(Layout l in _reverse) {
+                    if(l.Depth == lowestDepth) {
+                        l.GrowChildren(RectTransform.Axis.Horizontal);
+                        l.GrowChildren(RectTransform.Axis.Vertical);
+                    }
                 }
             }
-                
+            
+            
             // layout pass (2)
-            if(m_log) Debug.Log($"[Root]: Layout Pass");
+            Log("Layout Pass");
             foreach(Layout l in _reverse) {
                 l.ComputeLayout();
             }
             
-            if(m_log) Debug.Log($"[Root]: Refreshed {_reverse.Count} layouts");
+            Log($"Refreshed {_reverse.Count} layouts");
             
             _dirty = false;
         }
 
         public void RegisterLayout(Layout layout) {
-            if(m_log) Debug.Log($"[Root]: Registered \"{layout.name}\" at depth [{layout.Depth}]");
-            
-            layout.OnLayoutChanged += SetDirty;
+            Log($"Registered \"{layout.name}\" at depth [{layout.Depth}]");
             _layouts.Add(layout);
-            
             SetDirty();
         }
 
         public void UnregisterLayout(Layout layout) {
             if(_layouts.Remove(layout)) {
-                layout.OnLayoutChanged -= SetDirty;
-                
                 SetDirty();
-                if(m_log) Debug.Log($"[Root]: Removed \"{layout.name}\"");
+                Log($"Removed \"{layout.name}\"");
             }
             else {
                 Debug.LogError($"[Root]: Failed to remove \"{layout.name}\" (not found)");
             }
         }
-
-        // public void SetLayoutHorizontal() {
-        //     if(m_log) Debug.Log("[Root]: SetLayoutHorizontal");
-        //     if(_dirty)
-        //         UpdateLayout();
-        // }
-        // public void SetLayoutVertical() {
-        //     Debug.Log("[Root]: SetLayoutVertical");
-        //     // wow
-        // }
     }
 }
