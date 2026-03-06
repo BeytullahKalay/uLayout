@@ -11,8 +11,6 @@
     The above copyright notice and this permission notice shall be included in all
     copies or substantial portions of the Software.
 */
-
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -28,6 +26,7 @@ namespace Poke.UI
         
         private readonly SortedBucket<Layout, int, Layout> _layouts = new (l => l, l => l.GetInstanceID());
         private readonly Stack<Layout> _reverse = new ();
+        private readonly List<Layout> _roots = new();
         private bool _dirty;
 
         private void OnEnable() {
@@ -73,22 +72,13 @@ namespace Poke.UI
             }
 
             // grow sizing pass (1)
-            Log("Grow Size Pass (DFS)");
-            if(_reverse.Count > 0) {
+            Log("Grow Size Pass");
+            if(_roots.Count > 0) {
                 // start the grow propagation from the top-level layouts
-                int lowestDepth = Int32.MaxValue;
-                foreach(Layout l in _reverse) {
-                    lowestDepth = Mathf.Min(l.Depth, lowestDepth);
-                }
-
-                Log($"lowest depth: {lowestDepth}");
-
-                foreach(Layout l in _reverse) {
-                    if(l.Depth == lowestDepth) {
-                        Log($"growing layout \"{l.name}\"");
-                        l.GrowChildren(RectTransform.Axis.Horizontal);
-                        l.GrowChildren(RectTransform.Axis.Vertical);
-                    }
+                foreach(Layout l in _roots) {
+                    Log($"growing layout \"{l.name}\"");
+                    l.GrowChildren(RectTransform.Axis.Horizontal);
+                    l.GrowChildren(RectTransform.Axis.Vertical);
                 }
             }
             
@@ -104,14 +94,19 @@ namespace Poke.UI
             _dirty = false;
         }
 
-        public void RegisterLayout(Layout layout) {
+        public void RegisterLayout(Layout layout, bool isRoot) {
             Log($"Registered \"{layout.name}\" at depth [{layout.Depth}]");
             _layouts.Add(layout);
+            
+            if(isRoot)
+                _roots.Add(layout);
+            
             SetDirty();
         }
 
         public void UnregisterLayout(Layout layout) {
             if(_layouts.Remove(layout)) {
+                _roots.Remove(layout);
                 SetDirty();
                 Log($"Removed \"{layout.name}\"");
             }

@@ -115,7 +115,7 @@ namespace Poke.UI
                 }
             }
             
-            _root?.RegisterLayout(this);
+            _root?.RegisterLayout(this, !_parent);
         }
 
         protected void OnDisable() {
@@ -334,6 +334,9 @@ namespace Poke.UI
 
                                         count--;
                                     }
+                                    else if(c.li is Layout l) {
+                                        l.GrowChildren(RectTransform.Axis.Horizontal);
+                                    }
                                 }
 
                                 break;
@@ -361,6 +364,9 @@ namespace Poke.UI
                                             _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, newHeight);
                                             Log($"resizing vertical axis based on callback response ({newHeight})");
                                         }
+                                    }
+                                    else if(c.li is Layout l) {
+                                        l.GrowChildren(RectTransform.Axis.Horizontal);
                                     }
                                 }
                                 
@@ -409,6 +415,9 @@ namespace Poke.UI
                                             Log($"resizing vertical axis based on callback response ({newWidth})");
                                         }
                                     }
+                                    else if(c.li is Layout l) {
+                                        l.GrowChildren(RectTransform.Axis.Vertical);
+                                    }
                                 }
 
                                 break;
@@ -438,6 +447,9 @@ namespace Poke.UI
                                         }
 
                                         count--;
+                                    }
+                                    else if(c.li is Layout l) {
+                                        l.GrowChildren(RectTransform.Axis.Vertical);
                                     }
                                 }
                                 
