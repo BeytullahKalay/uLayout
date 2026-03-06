@@ -66,6 +66,8 @@ namespace Poke.UI
             ValidatePrefabStage();
             #endif
             
+            if(m_log) Debug.Log($"[LI:{gameObject.name}]: awake");
+            
             _rect = GetComponent<RectTransform>();
             _tracker = new DrivenRectTransformTracker();
             
@@ -82,9 +84,11 @@ namespace Poke.UI
             _dirty = true;
         }
         
+        #if UNITY_EDITOR
         protected virtual void OnValidate() {
             Awake();
         }
+        #endif
 
         public virtual void Update() {
             _tracker.Clear();
@@ -148,14 +152,14 @@ namespace Poke.UI
         #endif
 
         public virtual float GrowSizingXCallback(float x) {
-            _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, x);
             if(m_log) Debug.Log($"[LI:{gameObject.name}]: growing x size ({x})");
+            _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, x);
             return -1;
         }
 
         public virtual float GrowSizingYCallback(float y) {
-            _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, y);
             if(m_log) Debug.Log($"[LI:{gameObject.name}]: growing y size ({y})");
+            _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, y);
             return -1;
         }
 

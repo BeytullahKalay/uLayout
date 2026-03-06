@@ -1,4 +1,11 @@
-﻿## [1.5.4] - 2026-03-05
+﻿## [1.5.5] - 2026-03-06
+
+### Fixed
+- Fixed grow sizing not respecting ignored/disabled children
+- Improved logging
+- Slightly improved `LayoutText` grow performance
+
+## [1.5.4] - 2026-03-05
 
 ### Fixed
 - Partially rewrote grow sizing algorithm to be more stable & ensure correct order

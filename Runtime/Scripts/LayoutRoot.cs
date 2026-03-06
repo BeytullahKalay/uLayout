@@ -55,11 +55,11 @@ namespace Poke.UI
         }
 
         private void Log(object msg) {
-            if(m_log) Debug.Log($"<color=white>[Root]: {msg}</color>");
+            if(m_log) Debug.Log($"[{Time.frameCount}] <color=white>[Root]: {msg}</color>");
         }
         
         private void UpdateLayout() {
-            Log($"STARTING LAYOUT REFRESH ({Time.frameCount})");
+            Log("STARTING LAYOUT REFRESH");
             
             _reverse.Clear();
                 
@@ -81,8 +81,11 @@ namespace Poke.UI
                     lowestDepth = Mathf.Min(l.Depth, lowestDepth);
                 }
 
+                Log($"lowest depth: {lowestDepth}");
+
                 foreach(Layout l in _reverse) {
                     if(l.Depth == lowestDepth) {
+                        Log($"growing layout \"{l.name}\"");
                         l.GrowChildren(RectTransform.Axis.Horizontal);
                         l.GrowChildren(RectTransform.Axis.Vertical);
                     }

@@ -14,7 +14,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Poke.UI
 {
@@ -312,7 +311,7 @@ namespace Poke.UI
                             case LayoutDirection.Row:
                             case LayoutDirection.RowReverse:
                                 foreach(ChildInfo c in _children) {
-                                    if(!c.li)
+                                    if(!c.li || CheckIgnoreElem(c))
                                         continue;
                                     
                                     leftover = _rect.rect.size.x - _contentSize.x - m_padding.left - m_padding.right;
@@ -342,7 +341,7 @@ namespace Poke.UI
                             case LayoutDirection.ColumnReverse:
 
                                 foreach(ChildInfo c in _children) {
-                                    if(!c.li)
+                                    if(!c.li || CheckIgnoreElem(c))
                                         continue;
 
                                     crossSize = _rect.rect.size.x - m_padding.left - m_padding.right;
@@ -374,7 +373,8 @@ namespace Poke.UI
                             if(!c.li)
                                 continue;
                             
-                            (c.li as Layout)?.GrowChildren(RectTransform.Axis.Horizontal);
+                            if(c.li is Layout layout)
+                                layout.GrowChildren(RectTransform.Axis.Horizontal);
                         }
                     }
                     break;
@@ -388,7 +388,7 @@ namespace Poke.UI
                             case LayoutDirection.RowReverse:
                                 
                                 foreach(ChildInfo c in _children) {
-                                    if(!c.li)
+                                    if(!c.li || CheckIgnoreElem(c))
                                         continue;
                                     
                                     crossSize = _rect.rect.size.y - m_padding.top - m_padding.bottom;
@@ -416,7 +416,7 @@ namespace Poke.UI
                             case LayoutDirection.ColumnReverse:
 
                                 foreach(ChildInfo c in _children) {
-                                    if(!c.li)
+                                    if(!c.li || CheckIgnoreElem(c))
                                         continue;
                                     
                                     leftover = _rect.rect.size.y - _contentSize.y - m_padding.top - m_padding.bottom;
@@ -450,7 +450,8 @@ namespace Poke.UI
                             if(!c.li)
                                 continue;
                             
-                            (c.li as Layout)?.GrowChildren(RectTransform.Axis.Vertical);
+                            if(c.li is Layout layout)
+                                layout.GrowChildren(RectTransform.Axis.Vertical);
                         }
                     }
                     break;

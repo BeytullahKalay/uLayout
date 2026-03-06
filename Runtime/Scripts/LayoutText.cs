@@ -13,7 +13,6 @@
 */
 using System;
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 
 namespace Poke.UI
@@ -48,7 +47,8 @@ namespace Poke.UI
             base.Update();
             
             _text.textWrappingMode = m_sizing.x != SizingMode.FitContent ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
-            
+
+            bool textChanged = false;
             if(String.CompareOrdinal(_str, _text.text) != 0) {
                 _str = _text.text;
                 _dirty = true;
@@ -57,10 +57,11 @@ namespace Poke.UI
             if(!Mathf.Approximately(_text.fontSize, _fontSize)) {
                 _fontSize = _text.fontSize;
                 _dirty = true;
+                textChanged = true;
             }
                 
             if(_dirty) {
-                _text.ForceMeshUpdate(true, true);
+                _text.ForceMeshUpdate(true, textChanged);
                 _preferredSize = _text.GetPreferredValues();
                 DoFitSizing(_preferredSize);
             }
@@ -69,7 +70,6 @@ namespace Poke.UI
                 if(_parent) {
                     _parent.SetDirty();
                 }
-                LayoutRebuilder.MarkLayoutForRebuild(_rect);
                 _dirty = false;
             }
         }
@@ -101,7 +101,7 @@ namespace Poke.UI
             base.GrowSizingXCallback(x);
             
             if(m_sizing.y == SizingMode.FitContent) {
-                _text.ForceMeshUpdate(true, true);
+                _text.ForceMeshUpdate(true);
                 _preferredSize = _text.GetPreferredValues();
                 _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _preferredSize.y);
                 Log($"responsive y ({_preferredSize.y})");
@@ -115,7 +115,7 @@ namespace Poke.UI
             base.GrowSizingYCallback(y);
             
             if(m_sizing.x == SizingMode.FitContent) {
-                _text.ForceMeshUpdate(true, true);
+                _text.ForceMeshUpdate(true);
                 _preferredSize = _text.GetPreferredValues();
                 _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _preferredSize.x);
                 Log($"responsive x ({_preferredSize.x})");
