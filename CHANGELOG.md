@@ -1,4 +1,10 @@
-﻿## [1.5.5] - 2026-03-06
+﻿## [1.6.0] - ???
+
+### Changed
+- Rewrote all uLayout components to implement Unity's ILayoutElement and ILayoutController interfaces to receive native canvas events.
+- `Layout` no longer controls child pivot point
+
+## [1.5.5] - 2026-03-06
 
 ### Fixed
 - Fixed grow sizing not respecting ignored/disabled children

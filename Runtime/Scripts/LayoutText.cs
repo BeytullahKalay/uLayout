@@ -14,16 +14,18 @@
 using System;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 namespace Poke.UI
 {
     [RequireComponent(typeof(TMP_Text))]
-    public class LayoutText : LayoutItem
+    public class LayoutText : LayoutItem, ILayoutSelfController
     {
         private TMP_Text _text;
         private Vector2 _preferredSize;
         private float _fontSize;
         private string _str;
+        private bool _textChanged;
         
         protected override void Awake() {
             base.Awake();
@@ -39,8 +41,6 @@ namespace Poke.UI
             _text.ForceMeshUpdate(true, true);
 
             _preferredSize = _text.GetPreferredValues();
-            DoFitSizing(_preferredSize);
-            Log($"preferred size: {_preferredSize}, {_text.textInfo.lineCount} lines");
         }
 
         public override void Update() {
@@ -48,30 +48,23 @@ namespace Poke.UI
             
             _text.textWrappingMode = m_sizing.x != SizingMode.FitContent ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
 
-            bool textChanged = false;
             if(String.CompareOrdinal(_str, _text.text) != 0) {
                 _str = _text.text;
                 _dirty = true;
+                _textChanged = true;
             }
 
             if(!Mathf.Approximately(_text.fontSize, _fontSize)) {
                 _fontSize = _text.fontSize;
                 _dirty = true;
-                textChanged = true;
-            }
-                
-            if(_dirty) {
-                _text.ForceMeshUpdate(true, textChanged);
-                _preferredSize = _text.GetPreferredValues();
-                DoFitSizing(_preferredSize);
             }
 
             if(_dirty) {
-                if(_parent) {
-                    _parent.SetDirty();
-                }
+                LayoutRebuilder.MarkLayoutForRebuild(_rect);
                 _dirty = false;
             }
+
+            _textChanged = false;
         }
 
         protected override void SetDrivenProperties() {
@@ -81,19 +74,7 @@ namespace Poke.UI
                 _trackerProps |= DrivenTransformProperties.SizeDeltaY;
 
             if(_parent && !m_ignoreLayout) {
-                _trackerProps |= DrivenTransformProperties.AnchoredPosition | DrivenTransformProperties.Pivot |
-                                 DrivenTransformProperties.Anchors;
-            }
-        }
-
-        private void DoFitSizing(Vector2 size) {
-            if(m_sizing.x == SizingMode.FitContent && m_sizing.y != SizingMode.Grow) {
-                Log("Fit Size X");
-                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
-            }
-            if(m_sizing.y == SizingMode.FitContent && m_sizing.x != SizingMode.Grow) {
-                Log("Fit Size Y");
-                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
+                _trackerProps |= DrivenTransformProperties.AnchoredPosition | DrivenTransformProperties.Anchors;
             }
         }
         
@@ -127,6 +108,34 @@ namespace Poke.UI
 
         private void Log(object msg) {
             if(m_log) Debug.Log($"[LT:{gameObject.name}]: {msg}");
+        }
+
+        public override void CalculateLayoutInputHorizontal() {
+            base.CalculateLayoutInputHorizontal();
+            
+            _text.ForceMeshUpdate(true, _textChanged);
+            _preferredSize = _text.GetPreferredValues();
+
+            if(m_sizing.x == SizingMode.FitContent) {
+                Log($"fitting x ({_preferredSize.x})");
+                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _preferredSize.x);
+            }
+        }
+
+        public override void CalculateLayoutInputVertical() {
+            base.CalculateLayoutInputVertical();
+
+            if(m_sizing.y == SizingMode.FitContent) {
+                Log($"fitting y ({_preferredSize.y})");
+                _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _preferredSize.y);
+            }
+        }
+
+        public void SetLayoutHorizontal() {
+            Log("SetLayoutHorizontal");
+        }
+        public void SetLayoutVertical() {
+            Log("SetLayoutVertical");
         }
     }
 }

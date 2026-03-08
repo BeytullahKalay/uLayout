@@ -13,6 +13,8 @@
 */
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Poke.UI
 {
@@ -20,7 +22,7 @@ namespace Poke.UI
         ExecuteAlways,
         RequireComponent(typeof(RectTransform))
     ]
-    public class LayoutItem : MonoBehaviour
+    public class LayoutItem : UIBehaviour, ILayoutElement
     {
         [SerializeField] protected bool m_log;
         
@@ -28,14 +30,25 @@ namespace Poke.UI
         [SerializeField] protected bool m_ignoreLayout = false;
         [SerializeField] protected SizeModes m_sizing;
 
+        protected float _minWidth;
+        protected float _preferredWidth;
+        protected float _flexibleWidth;
+        protected float _minHeight;
+        protected float _preferredHeight;
+        protected float _flexibleHeight;
+        protected int _layoutPriority;
+
+        public float minWidth => _minWidth;
+        public float preferredWidth => _preferredWidth;
+        public float flexibleWidth => _flexibleWidth;
+        public float minHeight => _minHeight;
+        public float preferredHeight => _preferredHeight;
+        public float flexibleHeight => _flexibleHeight;
+        public int layoutPriority => _layoutPriority;
+        
         public bool IgnoreLayout {
             get => m_ignoreLayout;
-            set {
-                m_ignoreLayout = value;
-                if(_parent) {
-                    _parent.RefreshChildCache();
-                }
-            }
+            set => m_ignoreLayout = value;
         }
         public RectTransform Rect => _rect;
         public DrivenTransformProperties TrackerProps {
@@ -61,10 +74,8 @@ namespace Poke.UI
         }
 
         #region LayoutItem MonoBehavior
-        protected virtual void Awake() {
-            #if UNITY_EDITOR
-            ValidatePrefabStage();
-            #endif
+        protected override void Awake() {
+            base.Awake();
             
             if(m_log) Debug.Log($"[LI:{gameObject.name}]: awake");
             
@@ -74,7 +85,9 @@ namespace Poke.UI
             _parentSize = _parentRect ? _parentRect.rect.size : default;
         }
 
-        protected virtual void OnEnable() {
+        protected override void OnEnable() {
+            base.OnEnable();
+            
             if(transform.parent) {
                 _parentRect = transform.parent.GetComponent<RectTransform>();
                 _parent = transform.parent.GetComponent<Layout>();
@@ -83,12 +96,6 @@ namespace Poke.UI
             _trackerProps = DrivenTransformProperties.None;
             _dirty = true;
         }
-        
-        #if UNITY_EDITOR
-        protected virtual void OnValidate() {
-            Awake();
-        }
-        #endif
 
         public virtual void Update() {
             _tracker.Clear();
@@ -122,34 +129,9 @@ namespace Poke.UI
                 _trackerProps |= DrivenTransformProperties.SizeDeltaY;
 
             if(_parent && !m_ignoreLayout) {
-                _trackerProps |= DrivenTransformProperties.AnchoredPosition | DrivenTransformProperties.Pivot |
-                                 DrivenTransformProperties.Anchors;
+                _trackerProps |= DrivenTransformProperties.AnchoredPosition | DrivenTransformProperties.Anchors;
             }
         }
-
-        #if UNITY_EDITOR
-        private void ValidatePrefabStage() {
-            var prefabStage = UnityEditor.SceneManagement.PrefabStageUtility.GetPrefabStage(gameObject);
-            if(prefabStage == null)
-                return;
-        
-            LayoutRoot lr = gameObject.GetComponentInParent<LayoutRoot>(true);
-            if(lr != null)
-                return;
-        
-            // This way of getting to root is necessary since prefabContentsRoot and GetRootGameObjects aren't available at this point
-            Transform topmostTransform = gameObject.transform;
-            while (topmostTransform.parent != null)
-                topmostTransform = topmostTransform.parent;
-        
-            GameObject layoutRootObject = new GameObject("LayoutRoot (Editor)");
-            layoutRootObject.hideFlags = HideFlags.DontSaveInEditor;
-            layoutRootObject.AddComponent<LayoutRoot>();
-        
-            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(layoutRootObject, prefabStage.scene);
-            topmostTransform.SetParent(layoutRootObject.transform, false);
-        }
-        #endif
 
         public virtual float GrowSizingXCallback(float x) {
             if(m_log) Debug.Log($"[LI:{gameObject.name}]: growing x size ({x})");
@@ -164,10 +146,45 @@ namespace Poke.UI
         }
 
         public virtual void SetDirty() {
+            LayoutRebuilder.MarkLayoutForRebuild(_rect);
             _dirty = true;
-            if(_parent) {
-                _parent.SetDirty();
-            }
         }
+
+        protected override void OnBeforeTransformParentChanged() {
+            base.OnBeforeTransformParentChanged();
+            
+            if(m_log) Debug.Log($"[LI:{gameObject.name}]: OnBeforeTransformParentChanged");
+        }
+
+        protected override void OnCanvasGroupChanged() {
+            base.OnCanvasGroupChanged();
+            
+            if(m_log) Debug.Log($"[LI:{gameObject.name}]: OnCanvasGroupChanged");
+        }
+
+        protected override void OnCanvasHierarchyChanged() {
+            base.OnCanvasHierarchyChanged();
+            
+            if(m_log) Debug.Log($"[LI:{gameObject.name}]: OnCanvasHierarchyChanged");
+        }
+
+        protected override void OnRectTransformDimensionsChange() {
+            base.OnRectTransformDimensionsChange();
+            if(m_log) Debug.Log($"[LI:{gameObject.name}]: OnRectTransformDimensionsChange");
+        }
+
+        protected override void OnTransformParentChanged() {
+            base.OnTransformParentChanged();
+            
+            if(m_log) Debug.Log($"[LI:{gameObject.name}]: OnTransformParentChanged");
+        }
+
+        public virtual void CalculateLayoutInputHorizontal() {
+            if(m_log) Debug.Log($"[LI:{gameObject.name}]: CalculateLayoutInputHorizontal");
+        }
+        public virtual void CalculateLayoutInputVertical() {
+            if(m_log) Debug.Log($"[LI:{gameObject.name}]: CalculateLayoutInputVertical");
+        }
+        
     }
 }
