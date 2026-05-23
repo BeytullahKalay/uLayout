@@ -29,7 +29,9 @@ namespace Poke.UI
         private SerializedProperty _alignContent;
         private SerializedProperty _innerSpacing;
         private SerializedProperty _ignoreChildScale;
-        
+        private SerializedProperty _wrap;
+        private SerializedProperty _lineSpacing;
+
         protected override void OnEnable() {
             base.OnEnable();
             _layout = target as Layout;
@@ -40,6 +42,8 @@ namespace Poke.UI
             _alignContent = serializedObject.FindProperty("m_alignContent");
             _innerSpacing = serializedObject.FindProperty("m_innerSpacing");
             _ignoreChildScale = serializedObject.FindProperty("m_ignoreChildScale");
+            _wrap = serializedObject.FindProperty("m_wrap");
+            _lineSpacing = serializedObject.FindProperty("m_lineSpacing");
         }
 
         public override void OnInspectorGUI() {
@@ -58,8 +62,14 @@ namespace Poke.UI
             }
             EditorGUILayout.PropertyField(_innerSpacing);
             GUI.enabled = true;
-            
+
             EditorGUILayout.PropertyField(_ignoreChildScale);
+
+            EditorGUILayout.PropertyField(_wrap);
+            // m_lineSpacing sadece Wrap aktifken gorunsun
+            if((WrapMode)_wrap.enumValueIndex == WrapMode.Wrap) {
+                EditorGUILayout.PropertyField(_lineSpacing);
+            }
 
             if(serializedObject.hasModifiedProperties) {
                 serializedObject.ApplyModifiedProperties();

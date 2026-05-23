@@ -75,4 +75,10 @@ namespace Poke.UI
         Fixed,
         Grow,
     }
+
+    public enum WrapMode
+    {
+        NoWrap = 0,
+        Wrap   = 1,
+    }
 }

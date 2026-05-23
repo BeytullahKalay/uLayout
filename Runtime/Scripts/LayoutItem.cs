@@ -1,4 +1,4 @@
-﻿/*
+/*
     Copyright (c) 2026 Alex Howe
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,6 +29,10 @@ namespace Poke.UI
         [Header("Layout Item")]
         [SerializeField] protected bool m_ignoreLayout = false;
         [SerializeField] protected SizeModes m_sizing;
+        // In wrap mode, this item shouldn't contribute to the line's cross size — it retains
+        // its natural cross size but does not inflate the line, and blocks columns in subsequent
+        // lines (similar to a "floating" image in Word). Only meaningful under a wrap parent.
+        [SerializeField] protected bool m_overflowsLineCross = false;
 
         protected float _minWidth;
         protected float _preferredWidth;
@@ -56,6 +60,10 @@ namespace Poke.UI
             set => _trackerProps = value;
         }
         public SizeModes SizeMode => m_sizing;
+        public bool OverflowsLineCross {
+            get => m_overflowsLineCross;
+            set { m_overflowsLineCross = value; SetDirty(); }
+        }
         
         protected RectTransform _rect;
         protected DrivenRectTransformTracker _tracker;
