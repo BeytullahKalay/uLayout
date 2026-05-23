@@ -24,25 +24,24 @@ namespace Poke.UI
     {
         private LayoutItem _item;
 
-        private SerializedProperty _log;
         private SerializedProperty _ignoreLayout;
         private SerializedProperty _sizing;
         private SerializedProperty _overflowsLineCross;
 
-        protected virtual void OnEnable() {
+        protected virtual void OnEnable()
+        {
             _item = target as LayoutItem;
 
-            _log = serializedObject.FindProperty("m_log");
             _ignoreLayout = serializedObject.FindProperty("m_ignoreLayout");
             _sizing = serializedObject.FindProperty("m_sizing");
             _overflowsLineCross = serializedObject.FindProperty("m_overflowsLineCross");
         }
 
-        public override void OnInspectorGUI() {
-            if(!_item)
+        public override void OnInspectorGUI()
+        {
+            if (!_item)
                 return;
 
-            EditorGUILayout.PropertyField(_log);
             EditorGUILayout.PropertyField(_ignoreLayout);
 
             // disable sizing options if ignoreLayout is true
@@ -51,13 +50,15 @@ namespace Poke.UI
             EditorGUILayout.PropertyField(_overflowsLineCross);
             GUI.enabled = true;
 
-            if(serializedObject.hasModifiedProperties) {
+            if (serializedObject.hasModifiedProperties)
+            {
                 serializedObject.ApplyModifiedProperties();
-                
-                foreach(var obj in serializedObject.targetObjects) {
+
+                foreach (var obj in serializedObject.targetObjects)
+                {
                     (obj as LayoutItem).SetDirty();
                 }
-                
+
                 EditorApplication.QueuePlayerLoopUpdate();
             }
         }

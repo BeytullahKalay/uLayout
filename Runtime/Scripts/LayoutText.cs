@@ -12,8 +12,8 @@
     copies or substantial portions of the Software.
 */
 using System;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Poke.UI
@@ -26,16 +26,17 @@ namespace Poke.UI
         private float _fontSize;
         private string _str;
         private bool _textChanged;
-        
-        protected override void Awake() {
+
+        protected override void Awake()
+        {
             base.Awake();
             _text = GetComponent<TMP_Text>();
         }
 
-        protected override void OnEnable() {
+        protected override void OnEnable()
+        {
             base.OnEnable();
-            Log("enable");
-            
+
             _str = _text.text;
             _fontSize = _text.fontSize;
             _text.ForceMeshUpdate(true, true);
@@ -43,68 +44,71 @@ namespace Poke.UI
             _preferredSize = _text.GetPreferredValues();
         }
 
-        public override void Update() {
+        public override void Update()
+        {
             base.Update();
-            
+
             _text.textWrappingMode = m_sizing.x != SizingMode.FitContent ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
 
-            if(String.CompareOrdinal(_str, _text.text) != 0) {
+            if (String.CompareOrdinal(_str, _text.text) != 0)
+            {
                 _str = _text.text;
                 SetDirty();
                 _textChanged = true;
             }
 
-            if(!Mathf.Approximately(_text.fontSize, _fontSize)) {
+            if (!Mathf.Approximately(_text.fontSize, _fontSize))
+            {
                 _fontSize = _text.fontSize;
                 SetDirty();
             }
 
-            if(_dirty) {
-                Log("Marking for rebuild");
-                if(_parent)
+            if (_dirty)
+            {
+                if (_parent)
                     LayoutRebuilder.MarkLayoutForRebuild(_rect);
-                else {
+                else
+                {
                     CalculateLayoutInputHorizontal();
                     CalculateLayoutInputVertical();
                 }
             }
         }
 
-        protected override void SetDrivenProperties() {
-            if(m_sizing.x == SizingMode.FitContent || m_sizing.x == SizingMode.Grow)
+        protected override void SetDrivenProperties()
+        {
+            if (m_sizing.x == SizingMode.FitContent || m_sizing.x == SizingMode.Grow)
                 _trackerProps |= DrivenTransformProperties.SizeDeltaX;
-            if(m_sizing.y == SizingMode.FitContent || m_sizing.y == SizingMode.Grow)
+            if (m_sizing.y == SizingMode.FitContent || m_sizing.y == SizingMode.Grow)
                 _trackerProps |= DrivenTransformProperties.SizeDeltaY;
 
-            if(_parent && !m_ignoreLayout) {
+            if (_parent && !m_ignoreLayout)
+            {
                 _trackerProps |= DrivenTransformProperties.AnchoredPosition | DrivenTransformProperties.Anchors;
             }
         }
 
-        private void Log(object msg) {
-            if(m_log) Debug.Log($"[{_frame}] [LT:{gameObject.name}]: {msg}");
-        }
+        public override void CalculateLayoutInputHorizontal()
+        {
 
-        public override void CalculateLayoutInputHorizontal() {
-
-            if(_dirty) {
-                Log("CalculateLayoutInputHorizontal");
+            if (_dirty)
+            {
                 _text.ForceMeshUpdate(true, _textChanged);
                 _preferredSize = _text.GetPreferredValues();
 
-                if(m_sizing.x == SizingMode.FitContent) {
-                    Log($"fitting x ({_preferredSize.x})");
+                if (m_sizing.x == SizingMode.FitContent)
+                {
                     _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _preferredSize.x);
                 }
             }
         }
 
-        public override void CalculateLayoutInputVertical() {
-            if(_dirty) {
-                Log("CalculateLayoutInputVertical");
-                
-                if(m_sizing.y == SizingMode.FitContent) {
-                    Log($"fitting y ({_preferredSize.y})");
+        public override void CalculateLayoutInputVertical()
+        {
+            if (_dirty)
+            {
+                if (m_sizing.y == SizingMode.FitContent)
+                {
                     _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _preferredSize.y);
                 }
             }
@@ -113,12 +117,12 @@ namespace Poke.UI
             _textChanged = false;
         }
 
-        public void HandleGrowSizingX() {
-            if(m_sizing.y == SizingMode.FitContent) {
+        public void HandleGrowSizingX()
+        {
+            if (m_sizing.y == SizingMode.FitContent)
+            {
                 _text.ForceMeshUpdate();
                 _preferredSize = _text.GetPreferredValues();
-                Log($"resizing y based on x growth ({_preferredSize.y})");
-            
                 _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _preferredSize.y);
             }
         }

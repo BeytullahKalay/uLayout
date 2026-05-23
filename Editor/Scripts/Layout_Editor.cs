@@ -1,4 +1,4 @@
-﻿/*
+/*
     Copyright (c) 2026 Alex Howe
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,8 +31,10 @@ namespace Poke.UI
         private SerializedProperty _ignoreChildScale;
         private SerializedProperty _wrap;
         private SerializedProperty _lineSpacing;
+        private SerializedProperty _sizing;
 
-        protected override void OnEnable() {
+        protected override void OnEnable()
+        {
             base.OnEnable();
             _layout = target as Layout;
 
@@ -44,12 +46,14 @@ namespace Poke.UI
             _ignoreChildScale = serializedObject.FindProperty("m_ignoreChildScale");
             _wrap = serializedObject.FindProperty("m_wrap");
             _lineSpacing = serializedObject.FindProperty("m_lineSpacing");
+            _sizing = serializedObject.FindProperty("m_sizing");
         }
 
-        public override void OnInspectorGUI() {
+        public override void OnInspectorGUI()
+        {
             base.OnInspectorGUI();
 
-            if(!_layout)
+            if (!_layout)
                 return;
 
             EditorGUILayout.PropertyField(_padding);
@@ -57,33 +61,48 @@ namespace Poke.UI
             EditorGUILayout.PropertyField(_justifyContent);
             EditorGUILayout.PropertyField(_alignContent);
 
-            if((Layout.Justification)_justifyContent.enumValueFlag == Layout.Justification.SpaceBetween) {
+            if ((Layout.Justification)_justifyContent.enumValueFlag == Layout.Justification.SpaceBetween)
+            {
                 GUI.enabled = false;
             }
             EditorGUILayout.PropertyField(_innerSpacing);
             GUI.enabled = true;
 
-            EditorGUILayout.PropertyField(_ignoreChildScale);
+            // _ignoreChildScale, _wrap and _lineSpacing are only relevant when at least
+            // one axis has a determined size (Fixed or Grow). When both axes are FitContent
+            // the container shrinks to its children and these settings have no effect.
+            var sizeX = (SizingMode)_sizing.FindPropertyRelative("x").enumValueIndex;
+            var sizeY = (SizingMode)_sizing.FindPropertyRelative("y").enumValueIndex;
+            bool hasDeterminedSize = sizeX == SizingMode.Fixed || sizeX == SizingMode.Grow
+                                  || sizeY == SizingMode.Fixed || sizeY == SizingMode.Grow;
 
-            EditorGUILayout.PropertyField(_wrap);
-            // m_lineSpacing sadece Wrap aktifken gorunsun
-            if((WrapMode)_wrap.enumValueIndex == WrapMode.Wrap) {
-                EditorGUILayout.PropertyField(_lineSpacing);
+            if (hasDeterminedSize)
+            {
+                EditorGUILayout.PropertyField(_ignoreChildScale);
+
+                EditorGUILayout.PropertyField(_wrap);
+                if ((WrapMode)_wrap.enumValueIndex == WrapMode.Wrap)
+                {
+                    EditorGUILayout.PropertyField(_lineSpacing);
+                }
             }
 
-            if(serializedObject.hasModifiedProperties) {
+            if (serializedObject.hasModifiedProperties)
+            {
                 serializedObject.ApplyModifiedProperties();
-                foreach(var obj in serializedObject.targetObjects) {
+                foreach (var obj in serializedObject.targetObjects)
+                {
                     (obj as Layout).SetDirty();
                 }
             }
-            
+
             EditorGUILayout.Space();
             EditorGUILayout.HelpBox(
                 $"Tracking {_layout.ChildCount} layout elements.\nHorizontal Grow: {_layout.GrowChildCount.x}, Vertical Grow: {_layout.GrowChildCount.y}",
                 MessageType.Info
             );
-            if(GUILayout.Button("Refresh Child Cache")) {
+            if (GUILayout.Button("Refresh Child Cache"))
+            {
                 _layout.RefreshChildCache();
                 EditorApplication.QueuePlayerLoopUpdate();
             }
