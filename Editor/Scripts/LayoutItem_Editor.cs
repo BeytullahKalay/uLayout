@@ -26,7 +26,7 @@ namespace Poke.UI
 
         private SerializedProperty _ignoreLayout;
         private SerializedProperty _sizing;
-        private SerializedProperty _overflowsLineCross;
+        //private SerializedProperty _overflowsLineCross;
 
         protected virtual void OnEnable()
         {
@@ -34,7 +34,7 @@ namespace Poke.UI
 
             _ignoreLayout = serializedObject.FindProperty("m_ignoreLayout");
             _sizing = serializedObject.FindProperty("m_sizing");
-            _overflowsLineCross = serializedObject.FindProperty("m_overflowsLineCross");
+            //_overflowsLineCross = serializedObject.FindProperty("m_overflowsLineCross");
         }
 
         public override void OnInspectorGUI()
@@ -47,7 +47,21 @@ namespace Poke.UI
             // disable sizing options if ignoreLayout is true
             GUI.enabled = !_ignoreLayout.boolValue;
             EditorGUILayout.PropertyField(_sizing);
-            EditorGUILayout.PropertyField(_overflowsLineCross);
+
+            //var sizeX = (SizingMode)_sizing.FindPropertyRelative("x").enumValueIndex;
+            //var sizeY = (SizingMode)_sizing.FindPropertyRelative("y").enumValueIndex;
+            //bool hasDeterminedSize = sizeX == SizingMode.Fixed || sizeX == SizingMode.Grow
+            //                      || sizeY == SizingMode.Fixed || sizeY == SizingMode.Grow;
+
+            //EditorGUILayout.PropertyField(_overflowsLineCross);
+
+
+            //if (hasDeterminedSize)
+            //{
+            //    EditorGUILayout.PropertyField(_overflowsLineCross);
+            //}
+
+
             GUI.enabled = true;
 
             if (serializedObject.hasModifiedProperties)

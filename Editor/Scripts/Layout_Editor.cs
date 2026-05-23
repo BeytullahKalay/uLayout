@@ -32,6 +32,8 @@ namespace Poke.UI
         private SerializedProperty _wrap;
         private SerializedProperty _lineSpacing;
         private SerializedProperty _sizing;
+        private SerializedProperty _overflowsLineCross;
+
 
         protected override void OnEnable()
         {
@@ -47,6 +49,8 @@ namespace Poke.UI
             _wrap = serializedObject.FindProperty("m_wrap");
             _lineSpacing = serializedObject.FindProperty("m_lineSpacing");
             _sizing = serializedObject.FindProperty("m_sizing");
+            _overflowsLineCross = serializedObject.FindProperty("m_overflowsLineCross");
+
         }
 
         public override void OnInspectorGUI()
@@ -60,6 +64,7 @@ namespace Poke.UI
             EditorGUILayout.PropertyField(_direction);
             EditorGUILayout.PropertyField(_justifyContent);
             EditorGUILayout.PropertyField(_alignContent);
+            EditorGUILayout.PropertyField(_overflowsLineCross);
 
             if ((Layout.Justification)_justifyContent.enumValueFlag == Layout.Justification.SpaceBetween)
             {
