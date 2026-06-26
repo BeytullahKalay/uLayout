@@ -1,4 +1,6 @@
-﻿## [1.6.4] - 2026-06-26
+﻿## [1.7.0] - ???
+
+## [1.6.4] - 2026-06-26
 
 ### Added
 - Added `OnLayoutChanged` event to `Layout`, which is useful for waiting for the layout to complete before showing procedural content
