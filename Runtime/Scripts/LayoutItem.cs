@@ -23,6 +23,8 @@ namespace Poke.UI
     ]
     public class LayoutItem : MonoBehaviour, ILayoutElement
     {
+        [SerializeField] protected bool m_log;
+        
         [Header("Layout Item")]
         [SerializeField] protected bool m_ignoreLayout = false;
         [SerializeField] protected SizeModes m_sizing;
@@ -83,18 +85,15 @@ namespace Poke.UI
         }
 
         #region LayoutItem MonoBehavior
-        protected virtual void Awake()
-        {
+        protected virtual void Awake() {
             _rect = GetComponent<RectTransform>();
             _tracker = new DrivenRectTransformTracker();
 
             _parentSize = _parentRect ? _parentRect.rect.size : default;
         }
 
-        protected virtual void OnEnable()
-        {
-            if (transform.parent)
-            {
+        protected virtual void OnEnable() {
+            if(transform.parent) {
                 _parentRect = transform.parent.GetComponent<RectTransform>();
                 _parent = transform.parent.GetComponent<Layout>();
             }
@@ -103,8 +102,7 @@ namespace Poke.UI
             _dirty = true;
         }
 
-        public virtual void Update()
-        {
+        public virtual void Update() {
             //Log("update");
             _frame = Time.frameCount;
 
@@ -118,16 +116,13 @@ namespace Poke.UI
 #endif
 
             // Do grow sizing here if parent is not a Layout
-            if (!_parent && _parentRect)
-            {
+            if(!_parent && _parentRect) {
                 // only update size if parent size has changed
-                if (m_sizing.x == SizingMode.Grow && !Mathf.Approximately(_parentRect.rect.size.x, _parentSize.x))
-                {
+                if(m_sizing.x == SizingMode.Grow && !Mathf.Approximately(_parentRect.rect.size.x, _parentSize.x)) {
                     _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _parentRect.rect.size.x);
                     _parentSize = _parentSize.SetX(_parentRect.rect.size.x);
                 }
-                if (m_sizing.y == SizingMode.Grow && !Mathf.Approximately(_parentRect.rect.size.y, _parentSize.y))
-                {
+                if(m_sizing.y == SizingMode.Grow && !Mathf.Approximately(_parentRect.rect.size.y, _parentSize.y)) {
                     _rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _parentRect.rect.size.y);
                     _parentSize = _parentSize.SetY(_parentRect.rect.size.y);
                 }
@@ -135,33 +130,33 @@ namespace Poke.UI
         }
         #endregion
 
-        protected virtual void SetDrivenProperties()
-        {
-            if ((m_sizing.x == SizingMode.FitContent && transform.childCount > 0) || m_sizing.x == SizingMode.Grow)
+        private void Log(object msg) {
+            if(m_log) Debug.Log($"[{_frame}] [LI:{gameObject.name}]: {msg}");
+        }
+        
+        protected virtual void SetDrivenProperties() {
+            if((m_sizing.x == SizingMode.FitContent && transform.childCount > 0) || m_sizing.x == SizingMode.Grow)
                 _trackerProps |= DrivenTransformProperties.SizeDeltaX;
-            if ((m_sizing.y == SizingMode.FitContent && transform.childCount > 0) || m_sizing.y == SizingMode.Grow)
+            if((m_sizing.y == SizingMode.FitContent && transform.childCount > 0) || m_sizing.y == SizingMode.Grow)
                 _trackerProps |= DrivenTransformProperties.SizeDeltaY;
 
-            if (_parent && !m_ignoreLayout)
-            {
+            if(_parent && !m_ignoreLayout) 
                 _trackerProps |= DrivenTransformProperties.AnchoredPosition | DrivenTransformProperties.Anchors;
-            }
         }
 
-        public virtual void SetDirty()
-        {
+        public virtual void SetDirty() {
             _dirty = true;
-            if (_parent)
-            {
+            if(_parent) {
                 _parent.SetDirty();
             }
         }
 
-        public virtual void CalculateLayoutInputHorizontal()
-        {
+        public virtual void CalculateLayoutInputHorizontal() {
+            Log("CalculateLayoutInputHorizontal");
         }
-        public virtual void CalculateLayoutInputVertical()
-        {
+
+        public virtual void CalculateLayoutInputVertical() {
+            Log("CalculateLayoutInputVertical");
         }
     }
 }

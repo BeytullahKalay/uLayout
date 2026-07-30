@@ -35,8 +35,7 @@ namespace Poke.UI
         private SerializedProperty _overflowsLineCross;
 
 
-        protected override void OnEnable()
-        {
+        protected override void OnEnable() {
             base.OnEnable();
             _layout = target as Layout;
 
@@ -53,11 +52,10 @@ namespace Poke.UI
 
         }
 
-        public override void OnInspectorGUI()
-        {
+        public override void OnInspectorGUI() {
             base.OnInspectorGUI();
 
-            if (!_layout)
+            if(!_layout)
                 return;
 
             EditorGUILayout.PropertyField(_padding);
@@ -66,8 +64,7 @@ namespace Poke.UI
             EditorGUILayout.PropertyField(_alignContent);
             EditorGUILayout.PropertyField(_overflowsLineCross);
 
-            if ((Layout.Justification)_justifyContent.enumValueFlag == Layout.Justification.SpaceBetween)
-            {
+            if((Layout.Justification)_justifyContent.enumValueFlag == Layout.Justification.SpaceBetween) {
                 GUI.enabled = false;
             }
             EditorGUILayout.PropertyField(_innerSpacing);
@@ -81,22 +78,18 @@ namespace Poke.UI
             bool hasDeterminedSize = sizeX == SizingMode.Fixed || sizeX == SizingMode.Grow
                                   || sizeY == SizingMode.Fixed || sizeY == SizingMode.Grow;
 
-            if (hasDeterminedSize)
-            {
+            if(hasDeterminedSize) {
                 EditorGUILayout.PropertyField(_ignoreChildScale);
 
                 EditorGUILayout.PropertyField(_wrap);
-                if ((WrapMode)_wrap.enumValueIndex == WrapMode.Wrap)
-                {
+                if((WrapMode)_wrap.enumValueIndex == WrapMode.Wrap) {
                     EditorGUILayout.PropertyField(_lineSpacing);
                 }
             }
 
-            if (serializedObject.hasModifiedProperties)
-            {
+            if(serializedObject.hasModifiedProperties) {
                 serializedObject.ApplyModifiedProperties();
-                foreach (var obj in serializedObject.targetObjects)
-                {
+                foreach (var obj in serializedObject.targetObjects) {
                     (obj as Layout).SetDirty();
                 }
             }
@@ -106,8 +99,7 @@ namespace Poke.UI
                 $"Tracking {_layout.ChildCount} layout elements.\nHorizontal Grow: {_layout.GrowChildCount.x}, Vertical Grow: {_layout.GrowChildCount.y}",
                 MessageType.Info
             );
-            if (GUILayout.Button("Refresh Child Cache"))
-            {
+            if(GUILayout.Button("Refresh Child Cache")) {
                 _layout.RefreshChildCache();
                 EditorApplication.QueuePlayerLoopUpdate();
             }

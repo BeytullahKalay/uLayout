@@ -51,7 +51,7 @@ namespace Poke.UI
         }
     }
     
-    [System.Serializable]
+    [Serializable]
     public struct Margins : IEquatable<Margins>
     {
         public float top, bottom, left, right;
