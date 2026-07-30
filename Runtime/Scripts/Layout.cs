@@ -31,6 +31,8 @@ namespace Poke.UI
         public static List<Layout> RefreshedThisFrame = new();
 #endif
 
+        public event Action OnLayoutChanged;
+        
         [Header("Layout")]
         [SerializeField] private Margins m_padding;
         [SerializeField] private LayoutDirection m_direction;
@@ -552,10 +554,13 @@ namespace Poke.UI
             }
         }
 
+
         public void SetLayoutVertical()
         {
             if (_dirty)
             {
+                Log("SetLayoutVertical");
+                
                 if (m_wrap == WrapMode.Wrap && _lines.Count > 0)
                 {
                     GrowChildrenWrapped(RectTransform.Axis.Vertical);
@@ -566,6 +571,8 @@ namespace Poke.UI
                     GrowChildren(RectTransform.Axis.Vertical);
                     VerticalLayout();
                 }
+
+                OnLayoutChanged?.Invoke();
             }
 
             _dirty = false;
@@ -1565,9 +1572,11 @@ namespace Poke.UI
             {
                 RectTransform rt = transform.GetChild(i).GetComponent<RectTransform>();
                 if (rt == null) continue;
-
+                
                 LayoutItem li = rt.GetComponent<LayoutItem>();
-
+                
+                Log($"Adding child \"{rt.name}\" - size: {rt.rect.size}, layoutitem: {li != null}");
+                
                 _children.Add(
                     new ChildInfo
                     {
